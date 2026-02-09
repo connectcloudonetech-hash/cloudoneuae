@@ -1,0 +1,93 @@
+
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="description" content="Cloud One Technologies Dubai - Leading web design and development agency offering bespoke digital solutions." />
+    <title>Cloud One Technologies Dubai | Smart Web & App Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --brand-dark: #1F4E79;
+        --brand-light: #34C1E5;
+        --bg-app: #FDFDFE;
+      }
+      body {
+        font-family: 'Outfit', sans-serif;
+        -webkit-tap-highlight-color: transparent;
+        background-color: var(--bg-app);
+        color: #0F172A;
+        overflow-x: hidden;
+      }
+      .glass {
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(20px) saturate(160%);
+        -webkit-backdrop-filter: blur(20px) saturate(160%);
+      }
+      .app-card {
+        border-radius: 42px;
+        background: #FFFFFF;
+        border: 1px solid rgba(241, 245, 249, 0.8);
+        box-shadow: 0 4px 20px -5px rgba(15, 23, 42, 0.05);
+        transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .app-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 30px 60px -15px rgba(31, 78, 121, 0.12);
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, var(--brand-dark) 0%, #2a69a3 100%);
+        box-shadow: 0 12px 24px -8px rgba(31, 78, 121, 0.4);
+      }
+      .text-gradient {
+        background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-light) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+      @keyframes reveal {
+        from { opacity: 0; transform: translateY(30px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      .animate-reveal {
+        animation: reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      
+      .mesh-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: radial-gradient(at 0% 0%, rgba(52, 193, 229, 0.05) 0, transparent 50%), 
+                          radial-gradient(at 50% 0%, rgba(31, 78, 121, 0.05) 0, transparent 50%);
+        pointer-events: none;
+        z-index: -1;
+      }
+    </style>
+    <script type="importmap">
+    {
+      "imports": {
+        "react/": "https://esm.sh/react@^19.2.4/",
+        "react": "https://esm.sh/react@^19.2.4",
+        "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0",
+        "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+        "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
+      }
+    }
+    </script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+  <body class="selection:bg-[#34C1E5]/20">
+    <div class="mesh-bg"></div>
+    <div id="root"></div>
+    <script type="module" src="index.tsx"></script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
