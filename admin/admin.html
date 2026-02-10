@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2299.77">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;Admin Dashboard | Cloud One&lt;/title&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;h2&gt;Admin Dashboard&lt;/h2&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;form id="projectForm"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;input id="title" placeholder="Project Title" required&gt;&lt;br&gt;&lt;br&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;input id="image" placeholder="Image URL" required&gt;&lt;br&gt;&lt;br&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;input id="url" placeholder="Project Link"&gt;&lt;br&gt;&lt;br&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;textarea id="description" placeholder="Project Description"&gt;&lt;/textarea&gt;&lt;br&gt;&lt;br&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;button type="submit"&gt;Add Project&lt;/button&gt;</p>
+<p class="p1">&lt;/form&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;p id="status"&gt;&lt;/p&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;script type="module"&gt;</p>
+<p class="p1">import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";</p>
+<p class="p1">import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";</p>
+<p class="p1">import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";</p>
+<p class="p2"><br></p>
+<p class="p1">const firebaseConfig = {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>apiKey: "YOUR_API_KEY",</p>
+<p class="p1"><span class="Apple-converted-space">  </span>authDomain: "YOUR_PROJECT.firebaseapp.com",</p>
+<p class="p1"><span class="Apple-converted-space">  </span>projectId: "YOUR_PROJECT_ID",</p>
+<p class="p1"><span class="Apple-converted-space">  </span>appId: "YOUR_APP_ID"</p>
+<p class="p1">};</p>
+<p class="p2"><br></p>
+<p class="p1">const app = initializeApp(firebaseConfig);</p>
+<p class="p1">const auth = getAuth(app);</p>
+<p class="p1">const db = getFirestore(app);</p>
+<p class="p2"><br></p>
+<p class="p1">// 🔐 Protect admin page</p>
+<p class="p1">onAuthStateChanged(auth, (user) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if (!user) {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>window.location.href = "admin-login.html";</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">});</p>
+<p class="p2"><br></p>
+<p class="p1">// ➕ Add project</p>
+<p class="p1">document.getElementById("projectForm").addEventListener("submit", async (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>e.preventDefault();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>await addDoc(collection(db, "projects"), {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>title: title.value,</p>
+<p class="p1"><span class="Apple-converted-space">    </span>image: image.value,</p>
+<p class="p1"><span class="Apple-converted-space">    </span>url: url.value,</p>
+<p class="p1"><span class="Apple-converted-space">    </span>description: description.value,</p>
+<p class="p1"><span class="Apple-converted-space">    </span>createdAt: new Date()</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>status.innerText = "Project added successfully ✅";</p>
+<p class="p1"><span class="Apple-converted-space">  </span>e.target.reset();</p>
+<p class="p1">});</p>
+<p class="p1">&lt;/script&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
