@@ -1,16 +1,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, ArrowRight, FolderOpen, Filter, X, Eye, Lock, ShieldCheck, LogOut, Trash2, Edit3, Upload, ExternalLink, Globe, Link as LinkIcon, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Plus, ArrowRight, FolderOpen, Filter, X, Eye, Lock, ShieldCheck, LogOut, Trash2, Edit3, Upload, ExternalLink, Globe, Link as LinkIcon, Sparkles, CheckCircle2, Database, Terminal, Play, AlertCircle } from 'lucide-react';
 import { Project } from '../types';
 import { INITIAL_PROJECTS } from '../constants';
 
 const Portfolio: React.FC = () => {
-  // Use localStorage to persist projects added by admin
-  const [projects, setProjects] = useState<Project[]>(() => {
-    const saved = localStorage.getItem('cloudone_portfolio');
-    return saved ? JSON.parse(saved) : INITIAL_PROJECTS;
-  });
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [filter, setFilter] = useState<'All' | 'Web' | 'App' | 'Graphics'>('All');
   const [showUploader, setShowUploader] = useState(false);
@@ -21,6 +18,35 @@ const Portfolio: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
+  // Fetch projects from API
+  const fetchProjects = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/portfolio');
+      if (response.ok) {
+        const data = await response.json();
+        // Map database fields to Project interface
+        const mappedData = data.map((item: any) => ({
+          id: item.id.toString(),
+          title: item.title,
+          description: item.description,
+          imageUrl: item.image_url,
+          link: item.live_link,
+          category: item.category
+        }));
+        setProjects(mappedData);
+      }
+    } catch (err) {
+      console.error('Failed to fetch projects:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
   // Form State
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
@@ -29,10 +55,35 @@ const Portfolio: React.FC = () => {
   const [newImageBase64, setNewImageBase64] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync with localStorage
-  useEffect(() => {
-    localStorage.setItem('cloudone_portfolio', JSON.stringify(projects));
-  }, [projects]);
+  // SQL Explorer State
+  const [activeTab, setActiveTab] = useState<'Portfolio' | 'SQL'>('Portfolio');
+  const [sqlQuery, setSqlQuery] = useState('SELECT * FROM portfolio LIMIT 10;');
+  const [sqlResult, setSqlResult] = useState<any>(null);
+  const [sqlError, setSqlError] = useState('');
+  const [isSqlRunning, setIsSqlRunning] = useState(false);
+
+  const runSqlQuery = async () => {
+    setIsSqlRunning(true);
+    setSqlError('');
+    setSqlResult(null);
+    try {
+      const response = await fetch('/api/sql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: sqlQuery, password: 'admin123' })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setSqlResult(data);
+      } else {
+        setSqlError(data.error || 'Failed to execute query');
+      }
+    } catch (err) {
+      setSqlError('Network error occurred');
+    } finally {
+      setIsSqlRunning(false);
+    }
+  };
 
   // Persist admin state for the session
   useEffect(() => {
@@ -120,39 +171,42 @@ const Portfolio: React.FC = () => {
     setShowUploader(false);
   };
 
-  const handleAddOrUpdateProject = (e: React.FormEvent) => {
+  const handleAddOrUpdateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAdmin) return;
 
-    if (editingProject) {
-      // Update existing project
-      const updatedProjects = projects.map(p => 
-        p.id === editingProject.id 
-          ? { 
-              ...p, 
-              title: newTitle, 
-              description: newDesc, 
-              category: newCat, 
-              link: newLink, 
-              imageUrl: newImageBase64 || p.imageUrl 
-            } 
-          : p
-      );
-      setProjects(updatedProjects);
-    } else {
-      // Create new project
-      const newProject: Project = {
-        id: Date.now().toString(),
-        title: newTitle || 'Untitled Project',
-        category: newCat,
-        imageUrl: newImageBase64 || `https://placehold.co/1200x1200/F1F5F9/1F4E79?text=${encodeURIComponent(newTitle || 'Project')}`,
-        link: newLink || '#',
-        description: newDesc || 'Project engineered by Cloud One Technologies Dubai.'
-      };
-      setProjects([newProject, ...projects]);
+    const projectData = {
+      title: newTitle || 'Untitled Project',
+      description: newDesc || 'Project engineered by Cloud One Technologies Dubai.',
+      image_url: newImageBase64 || `https://placehold.co/1200x1200/F1F5F9/1F4E79?text=${encodeURIComponent(newTitle || 'Project')}`,
+      live_link: newLink || '#',
+      category: newCat
+    };
+
+    try {
+      if (editingProject) {
+        const response = await fetch(`/api/portfolio/${editingProject.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(projectData)
+        });
+        if (response.ok) {
+          await fetchProjects();
+        }
+      } else {
+        const response = await fetch('/api/portfolio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(projectData)
+        });
+        if (response.ok) {
+          await fetchProjects();
+        }
+      }
+      resetForm();
+    } catch (err) {
+      console.error('Failed to save project:', err);
     }
-    
-    resetForm();
   };
 
   const handleEditClick = (e: React.MouseEvent, project: Project) => {
@@ -167,12 +221,21 @@ const Portfolio: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDeleteProject = (e: React.MouseEvent, id: string) => {
+  const handleDeleteProject = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (!isAdmin) return;
     if (window.confirm('Are you sure you want to permanently delete this project?')) {
-      setProjects(prev => prev.filter(p => p.id !== id));
-      if (editingProject?.id === id) resetForm();
+      try {
+        const response = await fetch(`/api/portfolio/${id}`, {
+          method: 'DELETE'
+        });
+        if (response.ok) {
+          await fetchProjects();
+          if (editingProject?.id === id) resetForm();
+        }
+      } catch (err) {
+        console.error('Failed to delete project:', err);
+      }
     }
   };
 
@@ -246,149 +309,268 @@ const Portfolio: React.FC = () => {
         {/* Admin Dashboard UI */}
         {isAdmin && showUploader && (
           <div className="mb-16 p-6 md:p-12 bg-white rounded-[40px] md:rounded-[56px] shadow-2xl border border-slate-100 animate-reveal">
-            <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-10 flex items-center">
-              <FolderOpen className="mr-4 text-[#34C1E5]" />
-              {editingProject ? 'Update Project' : 'Management Console'}
-            </h2>
-            <form onSubmit={handleAddOrUpdateProject} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Project Title</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Luxury Real Estate"
-                  className="w-full px-8 py-5 rounded-3xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                />
-              </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Category</label>
-                <select
-                  className="w-full px-8 py-5 rounded-3xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900 appearance-none cursor-pointer"
-                  value={newCat}
-                  onChange={(e) => setNewCat(e.target.value as any)}
+            <div className="flex items-center justify-between mb-10">
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setActiveTab('Portfolio')}
+                  className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'Portfolio' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
                 >
-                  <option value="Web">Web Development</option>
-                  <option value="App">Mobile App</option>
-                  <option value="Graphics">Graphics & Branding</option>
-                </select>
-              </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Display Media</label>
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`w-full h-[68px] border-2 border-dashed rounded-3xl flex items-center px-6 cursor-pointer transition-all ${newImageBase64 ? 'border-[#34C1E5] bg-blue-50/30' : 'border-slate-200 bg-slate-50 hover:border-[#1F4E79]'}`}
+                  <FolderOpen size={14} /> Portfolio Manager
+                </button>
+                <button 
+                  onClick={() => setActiveTab('SQL')}
+                  className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'SQL' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
                 >
-                  <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
-                  {newImageBase64 ? (
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <img src={newImageBase64} className="w-10 h-10 object-cover rounded-lg" alt="Preview" />
-                      <span className="text-xs font-bold text-[#1F4E79] truncate">{editingProject ? 'Replace Existing Media' : 'Optimized Image Loaded'}</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <Upload size={18} className="text-slate-400" />
-                      <span className="text-sm font-bold text-slate-400">Choose Image</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-3 lg:col-span-1">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Live URL (Optional)</label>
-                <div className="relative">
-                  <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 w-4 h-4" />
-                  <input
-                    type="url"
-                    placeholder="https://..."
-                    className="w-full pl-14 pr-8 py-5 rounded-3xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900"
-                    value={newLink}
-                    onChange={(e) => setNewLink(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="lg:col-span-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Full Case Study / Description</label>
-                <textarea
-                  rows={2}
-                  className="w-full mt-3 px-8 py-5 rounded-3xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900 resize-none"
-                  placeholder="Describe the solution engineered by Cloud One Technologies..."
-                  value={newDesc}
-                  onChange={(e) => setNewDesc(e.target.value)}
-                />
-              </div>
-              <div className="md:col-span-3 flex justify-end gap-4">
-                {editingProject && (
-                  <button 
-                    type="button" 
-                    onClick={resetForm}
-                    className="px-10 py-6 bg-slate-100 text-slate-500 font-black rounded-3xl uppercase tracking-widest text-xs active:scale-95 hover:bg-slate-200 transition-colors"
-                  >
-                    Cancel Edit
-                  </button>
-                )}
-                <button type="submit" className="px-16 py-6 bg-[#1F4E79] text-white font-black rounded-3xl uppercase tracking-widest text-xs shadow-2xl active:scale-95 hover:bg-[#153450] transition-colors">
-                  {editingProject ? 'Save Changes' : 'Publish to Gallery'}
+                  <Terminal size={14} /> SQL Explorer
                 </button>
               </div>
-            </form>
+              <h2 className="hidden md:flex text-2xl font-black text-slate-900 items-center">
+                {activeTab === 'Portfolio' ? (
+                  <><FolderOpen className="mr-4 text-[#34C1E5]" /> {editingProject ? 'Update Project' : 'Management Console'}</>
+                ) : (
+                  <><Database className="mr-4 text-[#34C1E5]" /> SQL Engine</>
+                )}
+              </h2>
+            </div>
+
+            {activeTab === 'Portfolio' ? (
+              <form onSubmit={handleAddOrUpdateProject} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Project Title</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Luxury Real Estate"
+                    className="w-full px-8 py-5 rounded-3xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Category</label>
+                  <select
+                    className="w-full px-8 py-5 rounded-3xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900 appearance-none cursor-pointer"
+                    value={newCat}
+                    onChange={(e) => setNewCat(e.target.value as any)}
+                  >
+                    <option value="Web">Web Development</option>
+                    <option value="App">Mobile App</option>
+                    <option value="Graphics">Graphics & Branding</option>
+                  </select>
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Display Media</label>
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`w-full h-[68px] border-2 border-dashed rounded-3xl flex items-center px-6 cursor-pointer transition-all ${newImageBase64 ? 'border-[#34C1E5] bg-blue-50/30' : 'border-slate-200 bg-slate-50 hover:border-[#1F4E79]'}`}
+                  >
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+                    {newImageBase64 ? (
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <img src={newImageBase64} className="w-10 h-10 object-cover rounded-lg" alt="Preview" />
+                        <span className="text-xs font-bold text-[#1F4E79] truncate">{editingProject ? 'Replace Existing Media' : 'Optimized Image Loaded'}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <Upload size={18} className="text-slate-400" />
+                        <span className="text-sm font-bold text-slate-400">Choose Image</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-3 lg:col-span-1">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Live URL (Optional)</label>
+                  <div className="relative">
+                    <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 w-4 h-4" />
+                    <input
+                      type="url"
+                      placeholder="https://..."
+                      className="w-full pl-14 pr-8 py-5 rounded-3xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900"
+                      value={newLink}
+                      onChange={(e) => setNewLink(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="lg:col-span-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Full Case Study / Description</label>
+                  <textarea
+                    rows={2}
+                    className="w-full mt-3 px-8 py-5 rounded-3xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900 resize-none"
+                    placeholder="Describe the solution engineered by Cloud One Technologies..."
+                    value={newDesc}
+                    onChange={(e) => setNewDesc(e.target.value)}
+                  />
+                </div>
+                <div className="md:col-span-3 flex justify-end gap-4">
+                  {editingProject && (
+                    <button 
+                      type="button" 
+                      onClick={resetForm}
+                      className="px-10 py-6 bg-slate-100 text-slate-500 font-black rounded-3xl uppercase tracking-widest text-xs active:scale-95 hover:bg-slate-200 transition-colors"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                  <button type="submit" className="px-16 py-6 bg-[#1F4E79] text-white font-black rounded-3xl uppercase tracking-widest text-xs shadow-2xl active:scale-95 hover:bg-[#153450] transition-colors">
+                    {editingProject ? 'Save Changes' : 'Publish to Gallery'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Raw SQL Query</label>
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+                      <Database size={12} /> SQLite 3.x
+                    </div>
+                  </div>
+                  <div className="relative group">
+                    <textarea
+                      rows={4}
+                      className="w-full px-8 py-6 rounded-3xl border border-slate-100 bg-slate-900 text-emerald-400 font-mono text-sm focus:ring-4 focus:ring-blue-500/10 outline-none transition-all resize-none shadow-inner"
+                      value={sqlQuery}
+                      onChange={(e) => setSqlQuery(e.target.value)}
+                    />
+                    <button 
+                      onClick={runSqlQuery}
+                      disabled={isSqlRunning}
+                      className="absolute bottom-6 right-6 px-6 py-3 bg-emerald-500 text-white font-black rounded-2xl flex items-center gap-2 hover:bg-emerald-600 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 shadow-xl"
+                    >
+                      {isSqlRunning ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Play size={14} fill="currentColor" />}
+                      Run Query
+                    </button>
+                  </div>
+                </div>
+
+                {sqlError && (
+                  <div className="p-6 bg-red-50 border border-red-100 rounded-3xl flex items-start gap-4 text-red-600 animate-reveal">
+                    <AlertCircle className="shrink-0 mt-1" size={20} />
+                    <div>
+                      <p className="font-black uppercase tracking-widest text-[10px] mb-1">Execution Error</p>
+                      <p className="font-mono text-xs">{sqlError}</p>
+                    </div>
+                  </div>
+                )}
+
+                {sqlResult && (
+                  <div className="space-y-4 animate-reveal">
+                    <div className="flex items-center justify-between px-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Query Result</h4>
+                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+                        {Array.isArray(sqlResult) ? `${sqlResult.length} Rows Returned` : 'Command Executed'}
+                      </span>
+                    </div>
+                    <div className="bg-slate-50 rounded-3xl border border-slate-100 overflow-hidden">
+                      <div className="max-h-[400px] overflow-auto no-scrollbar">
+                        {Array.isArray(sqlResult) ? (
+                          sqlResult.length > 0 ? (
+                            <table className="w-full text-left border-collapse">
+                              <thead>
+                                <tr className="bg-slate-100/50 border-b border-slate-100">
+                                  {Object.keys(sqlResult[0]).map(key => (
+                                    <th key={key} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">{key}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {sqlResult.map((row, i) => (
+                                  <tr key={i} className="border-b border-slate-100/50 hover:bg-white transition-colors">
+                                    {Object.values(row).map((val: any, j) => (
+                                      <td key={j} className="px-6 py-4 font-mono text-xs text-slate-600 truncate max-w-[200px]" title={String(val)}>
+                                        {val === null ? <span className="text-slate-300 italic">null</span> : String(val)}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          ) : (
+                            <div className="p-12 text-center text-slate-400 font-medium">Query returned no results.</div>
+                          )
+                        ) : (
+                          <div className="p-12 text-center">
+                             <CheckCircle2 className="mx-auto w-12 h-12 text-emerald-500 mb-4" />
+                             <p className="text-slate-900 font-black uppercase tracking-widest text-xs">{sqlResult.message}</p>
+                             {sqlResult.result && <p className="text-slate-400 text-[10px] mt-2 font-mono">Changes: {sqlResult.result.changes} | LastID: {sqlResult.result.lastID}</p>}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
         {/* Portfolio Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 animate-reveal">
-          {filteredProjects.map((project) => (
-            <div 
-              key={project.id} 
-              onClick={() => setSelectedProject(project)}
-              className="app-card group flex flex-col h-full overflow-hidden border-none shadow-sm relative cursor-pointer"
-            >
-              {isAdmin && (
-                <div className="absolute top-4 right-4 z-[20] flex gap-2">
-                  <button
-                    onClick={(e) => handleEditClick(e, project)}
-                    className="w-10 h-10 bg-white/95 rounded-full shadow-lg text-[#1F4E79] flex items-center justify-center hover:bg-[#1F4E79] hover:text-white transition-all transform active:scale-90 border border-slate-100"
-                    title="Edit Project"
-                  >
-                    <Edit3 size={18} />
-                  </button>
-                  <button
-                    onClick={(e) => handleDeleteProject(e, project.id)}
-                    className="w-10 h-10 bg-white/95 rounded-full shadow-lg text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all transform active:scale-90 border border-slate-100"
-                    title="Delete Project"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-32 space-y-6 animate-pulse">
+            <div className="w-16 h-16 border-4 border-[#34C1E5] border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-[10px]">Synchronizing Ecosystem...</p>
+          </div>
+        ) : filteredProjects.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 animate-reveal">
+            {filteredProjects.map((project) => (
+              <div 
+                key={project.id} 
+                onClick={() => setSelectedProject(project)}
+                className="app-card group flex flex-col h-full overflow-hidden border-none shadow-sm relative cursor-pointer"
+              >
+                {isAdmin && (
+                  <div className="absolute top-4 right-4 z-[20] flex gap-2">
+                    <button
+                      onClick={(e) => handleEditClick(e, project)}
+                      className="w-10 h-10 bg-white/95 rounded-full shadow-lg text-[#1F4E79] flex items-center justify-center hover:bg-[#1F4E79] hover:text-white transition-all transform active:scale-90 border border-slate-100"
+                      title="Edit Project"
+                    >
+                      <Edit3 size={18} />
+                    </button>
+                    <button
+                      onClick={(e) => handleDeleteProject(e, project.id)}
+                      className="w-10 h-10 bg-white/95 rounded-full shadow-lg text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all transform active:scale-90 border border-slate-100"
+                      title="Delete Project"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                )}
+                
+                <div className="relative overflow-hidden aspect-[4/5] bg-slate-100">
+                  <img 
+                    src={project.imageUrl} 
+                    alt={project.title} 
+                    className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110" 
+                  />
+                  <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center">
+                     <div className="bg-white/20 backdrop-blur-xl p-6 rounded-full border border-white/30 transform translate-y-8 group-hover:translate-y-0 transition-all duration-500">
+                        <Eye className="w-10 h-10 text-white" />
+                     </div>
+                  </div>
+                  <div className="absolute top-6 left-6">
+                    <span className="px-4 py-2 bg-white/95 rounded-xl text-[8px] font-black text-slate-900 uppercase tracking-widest shadow-sm">{project.category}</span>
+                  </div>
                 </div>
-              )}
-              
-              <div className="relative overflow-hidden aspect-[4/5] bg-slate-100">
-                <img 
-                  src={project.imageUrl} 
-                  alt={project.title} 
-                  className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110" 
-                />
-                <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center">
-                   <div className="bg-white/20 backdrop-blur-xl p-6 rounded-full border border-white/30 transform translate-y-8 group-hover:translate-y-0 transition-all duration-500">
-                      <Eye className="w-10 h-10 text-white" />
-                   </div>
-                </div>
-                <div className="absolute top-6 left-6">
-                  <span className="px-4 py-2 bg-white/95 rounded-xl text-[8px] font-black text-slate-900 uppercase tracking-widest shadow-sm">{project.category}</span>
+                <div className="p-10 flex flex-col flex-grow">
+                  <h3 className="text-2xl font-black text-slate-900 mb-3 group-hover:text-[#1F4E79] transition-colors tracking-tight">{project.title}</h3>
+                  <p className="text-slate-500 text-sm font-medium line-clamp-2 mb-8">{project.description}</p>
+                  <div className="pt-8 mt-auto border-t border-slate-50">
+                    <span className="inline-flex items-center text-[#1F4E79] font-black text-[10px] uppercase tracking-widest group-hover:translate-x-2 transition-transform">
+                      View Case Study <ArrowRight className="ml-2 w-4 h-4" />
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="p-10 flex flex-col flex-grow">
-                <h3 className="text-2xl font-black text-slate-900 mb-3 group-hover:text-[#1F4E79] transition-colors tracking-tight">{project.title}</h3>
-                <p className="text-slate-500 text-sm font-medium line-clamp-2 mb-8">{project.description}</p>
-                <div className="pt-8 mt-auto border-t border-slate-50">
-                  <span className="inline-flex items-center text-[#1F4E79] font-black text-[10px] uppercase tracking-widest group-hover:translate-x-2 transition-transform">
-                    View Case Study <ArrowRight className="ml-2 w-4 h-4" />
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-32 border-2 border-dashed border-slate-100 rounded-[48px]">
+            <FolderOpen className="mx-auto w-16 h-16 text-slate-200 mb-6" />
+            <h3 className="text-xl font-black text-slate-900 mb-2">No Projects Found</h3>
+            <p className="text-slate-400 font-medium">The digital gallery is currently being curated.</p>
+          </div>
+        )}
 
         {/* Smooth Expansion Modal */}
         {selectedProject && (

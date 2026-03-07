@@ -29,7 +29,7 @@ const Contact: React.FC = () => {
               <div className="space-y-8">
                 {[
                   { icon: <MapPin />, title: 'Our Location', value: 'Office 304 Haji Nasser Building, Al-Sabkha, Dubai, UAE' },
-                  { icon: <Mail />, title: 'Email Us', value: 'info@cloudonetechnologies.com' },
+                  { icon: <Mail />, title: 'Email Us', value: 'info@cloudonetechuae.com' },
                   { icon: <Phone />, title: 'Call Us', value: '+971 555 791 309' }
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-start group">

@@ -75,7 +75,7 @@ const Footer: React.FC = () => {
                 <div className="p-2 bg-gray-800 rounded-lg mr-4 text-[#34C1E5]">
                   <Mail size={18} />
                 </div>
-                <span>info@cloudonetechnologies.com</span>
+                <span>info@cloudonetechuae.com</span>
               </li>
             </ul>
           </div>
