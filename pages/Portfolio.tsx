@@ -8,6 +8,7 @@ import { INITIAL_PROJECTS } from '../constants';
 const Portfolio: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   
   const [filter, setFilter] = useState<'All' | 'Web' | 'App' | 'Graphics'>('All');
   const [showUploader, setShowUploader] = useState(false);
@@ -22,6 +23,7 @@ const Portfolio: React.FC = () => {
   const fetchProjects = async () => {
     try {
       setIsLoading(true);
+      setFetchError(null);
       const response = await fetch('/api/portfolio');
       if (response.ok) {
         const data = await response.json();
@@ -35,9 +37,12 @@ const Portfolio: React.FC = () => {
           category: item.category
         }));
         setProjects(mappedData);
+      } else {
+        setFetchError('Failed to load portfolio items from the server.');
       }
     } catch (err) {
       console.error('Failed to fetch projects:', err);
+      setFetchError('Network error: Could not reach the server.');
     } finally {
       setIsLoading(false);
     }
@@ -61,6 +66,24 @@ const Portfolio: React.FC = () => {
   const [sqlResult, setSqlResult] = useState<any>(null);
   const [sqlError, setSqlError] = useState('');
   const [isSqlRunning, setIsSqlRunning] = useState(false);
+  const [dbStatus, setDbStatus] = useState<any>(null);
+
+  const fetchDbStatus = async () => {
+    try {
+      const response = await fetch('/api/db/status');
+      if (response.ok) {
+        setDbStatus(await response.json());
+      }
+    } catch (err) {
+      console.error('Failed to fetch DB status');
+    }
+  };
+
+  useEffect(() => {
+    if (isAdmin && activeTab === 'SQL') {
+      fetchDbStatus();
+    }
+  }, [isAdmin, activeTab]);
 
   const runSqlQuery = async () => {
     setIsSqlRunning(true);
@@ -75,13 +98,36 @@ const Portfolio: React.FC = () => {
       const data = await response.json();
       if (response.ok) {
         setSqlResult(data);
+        fetchDbStatus(); // Refresh status after query
       } else {
         setSqlError(data.error || 'Failed to execute query');
       }
     } catch (err) {
-      setSqlError('Network error occurred');
+      setSqlError('Network error occurred. The server might be restarting or unreachable.');
     } finally {
       setIsSqlRunning(false);
+    }
+  };
+
+  const handleReseed = async () => {
+    if (!window.confirm('This will DELETE ALL PORTFOLIO DATA and restore defaults. Proceed?')) return;
+    
+    try {
+      const response = await fetch('/api/db/seed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: 'admin123' })
+      });
+      if (response.ok) {
+        alert('Database re-seeded successfully.');
+        fetchProjects();
+        fetchDbStatus();
+      } else {
+        const data = await response.json();
+        alert(`Error: ${data.error}`);
+      }
+    } catch (err) {
+      alert('Network error occurred during re-seeding.');
     }
   };
 
@@ -192,6 +238,10 @@ const Portfolio: React.FC = () => {
         });
         if (response.ok) {
           await fetchProjects();
+          resetForm();
+        } else {
+          const data = await response.json();
+          alert(`Failed to update project: ${data.error || 'Unknown error'}`);
         }
       } else {
         const response = await fetch('/api/portfolio', {
@@ -201,11 +251,15 @@ const Portfolio: React.FC = () => {
         });
         if (response.ok) {
           await fetchProjects();
+          resetForm();
+        } else {
+          const data = await response.json();
+          alert(`Failed to add project: ${data.error || 'Unknown error'}. This might be due to a large image file.`);
         }
       }
-      resetForm();
     } catch (err) {
       console.error('Failed to save project:', err);
+      alert('Network error: Failed to save project. Please try again.');
     }
   };
 
@@ -335,6 +389,7 @@ const Portfolio: React.FC = () => {
 
             {activeTab === 'Portfolio' ? (
               <form onSubmit={handleAddOrUpdateProject} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {/* ... existing form ... */}
                 <div className="space-y-3">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Project Title</label>
                   <input
@@ -418,6 +473,33 @@ const Portfolio: React.FC = () => {
               </form>
             ) : (
               <div className="space-y-8">
+                {/* Database Status Bar */}
+                {dbStatus && (
+                  <div className="flex flex-wrap gap-4 p-4 bg-slate-50 rounded-3xl border border-slate-100 animate-reveal">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border border-slate-100">
+                      <Database size={14} className="text-emerald-500" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status:</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">{dbStatus.status}</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border border-slate-100">
+                      <FolderOpen size={14} className="text-blue-500" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tables:</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">{dbStatus.tables?.join(', ')}</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border border-slate-100">
+                      <Sparkles size={14} className="text-amber-500" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Records:</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">{dbStatus.records}</span>
+                    </div>
+                    <button 
+                      onClick={handleReseed}
+                      className="ml-auto px-4 py-2 bg-red-50 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-100 transition-colors border border-red-100"
+                    >
+                      Reset Database
+                    </button>
+                  </div>
+                )}
+
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Raw SQL Query</label>
@@ -509,6 +591,18 @@ const Portfolio: React.FC = () => {
           <div className="flex flex-col items-center justify-center py-32 space-y-6 animate-pulse">
             <div className="w-16 h-16 border-4 border-[#34C1E5] border-t-transparent rounded-full animate-spin"></div>
             <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-[10px]">Synchronizing Ecosystem...</p>
+          </div>
+        ) : fetchError ? (
+          <div className="text-center py-32 border-2 border-dashed border-red-100 rounded-[48px] bg-red-50/30">
+            <AlertCircle className="mx-auto w-16 h-16 text-red-200 mb-6" />
+            <h3 className="text-xl font-black text-slate-900 mb-2">Connection Error</h3>
+            <p className="text-slate-400 font-medium">{fetchError}</p>
+            <button 
+              onClick={fetchProjects}
+              className="mt-8 px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95"
+            >
+              Retry Connection
+            </button>
           </div>
         ) : filteredProjects.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 animate-reveal">

@@ -4,6 +4,7 @@ import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 import cors from "cors";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -14,62 +15,75 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(cors());
-  app.use(express.json());
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+  // Ensure data directory exists
+  const dataDir = path.join(__dirname, "data");
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir);
+  }
+  const dbPath = path.join(dataDir, "database.sqlite");
 
   // Initialize SQLite database
   const db = await open({
-    filename: "./database.sqlite",
+    filename: dbPath,
     driver: sqlite3.Database,
   });
 
-  // Create portfolio table if it doesn't exist
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS portfolio (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      description TEXT,
-      image_url TEXT,
-      live_link TEXT,
-      category TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+  async function seedDatabase() {
+    console.log("Initializing/Seeding database...");
+    // Create portfolio table if it doesn't exist
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS portfolio (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT,
+        image_url TEXT,
+        live_link TEXT,
+        category TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-  // Seed initial data if empty
-  const count = await db.get("SELECT COUNT(*) as count FROM portfolio");
-  if (count.count === 0) {
-    const initialProjects = [
-      {
-        title: 'Luxury Real Estate Portal',
-        category: 'Web',
-        image_url: 'https://images.unsplash.com/photo-1560448204-603b3fc33ddc?q=80&w=800&auto=format&fit=crop',
-        live_link: '#',
-        description: 'A high-end property listing site for Dubai real estate featuring immersive VR tours and custom filtering.'
-      },
-      {
-        title: 'Cloud-Based Delivery App',
-        category: 'App',
-        image_url: 'https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?q=80&w=800&auto=format&fit=crop',
-        live_link: '#',
-        description: 'Efficient logistics management mobile application with real-time tracking and automated dispatch.'
-      },
-      {
-        title: 'Corporate Identity Kit',
-        category: 'Graphics',
-        image_url: 'https://images.unsplash.com/photo-1634942550612-b105fb467921?q=80&w=800&auto=format&fit=crop',
-        live_link: '#',
-        description: 'Brand guidelines, stationary, and digital asset library for a high-growth tech startup.'
+    // Seed initial data if empty
+    const count = await db.get("SELECT COUNT(*) as count FROM portfolio");
+    if (count.count === 0) {
+      const initialProjects = [
+        {
+          title: 'Luxury Real Estate Portal',
+          category: 'Web',
+          image_url: 'https://images.unsplash.com/photo-1560448204-603b3fc33ddc?q=80&w=800&auto=format&fit=crop',
+          live_link: '#',
+          description: 'A high-end property listing site for Dubai real estate featuring immersive VR tours and custom filtering.'
+        },
+        {
+          title: 'Cloud-Based Delivery App',
+          category: 'App',
+          image_url: 'https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?q=80&w=800&auto=format&fit=crop',
+          live_link: '#',
+          description: 'Efficient logistics management mobile application with real-time tracking and automated dispatch.'
+        },
+        {
+          title: 'Corporate Identity Kit',
+          category: 'Graphics',
+          image_url: 'https://images.unsplash.com/photo-1634942550612-b105fb467921?q=80&w=800&auto=format&fit=crop',
+          live_link: '#',
+          description: 'Brand guidelines, stationary, and digital asset library for a high-growth tech startup.'
+        }
+      ];
+
+      for (const project of initialProjects) {
+        await db.run(
+          "INSERT INTO portfolio (title, category, image_url, live_link, description) VALUES (?, ?, ?, ?, ?)",
+          [project.title, project.category, project.image_url, project.live_link, project.description]
+        );
       }
-    ];
-
-    for (const project of initialProjects) {
-      await db.run(
-        "INSERT INTO portfolio (title, category, image_url, live_link, description) VALUES (?, ?, ?, ?, ?)",
-        [project.title, project.category, project.image_url, project.live_link, project.description]
-      );
+      console.log("Database seeded with initial projects.");
     }
-    console.log("Database seeded with initial projects.");
   }
+
+  await seedDatabase();
 
   // API Routes
   app.get("/api/portfolio", async (req, res) => {
@@ -120,6 +134,7 @@ async function startServer() {
 
   app.post("/api/sql", async (req, res) => {
     const { query, password } = req.body;
+    console.log(`Executing SQL: ${query}`);
     
     // Simple protection using the same admin password
     if (password !== "admin123") {
@@ -132,7 +147,7 @@ async function startServer() {
     } catch (error: any) {
       // If it's not a SELECT query, db.all might return an empty array or throw
       // Let's try db.run if it's not a SELECT
-      if (error.message.includes("does not return data")) {
+      if (error.message && error.message.includes("does not return data")) {
         try {
           const runResult = await db.run(query);
           return res.json({ message: "Query executed successfully", result: runResult });
@@ -140,7 +155,35 @@ async function startServer() {
           return res.status(400).json({ error: runError.message });
         }
       }
-      res.status(400).json({ error: error.message });
+      res.status(400).json({ error: error.message || "Unknown SQL error" });
+    }
+  });
+
+  app.get("/api/db/status", async (req, res) => {
+    try {
+      const tables = await db.all("SELECT name FROM sqlite_master WHERE type='table'");
+      const portfolioCount = await db.get("SELECT COUNT(*) as count FROM portfolio");
+      res.json({ 
+        status: "connected", 
+        database: "SQLite 3",
+        tables: tables.map(t => t.name),
+        records: portfolioCount.count
+      });
+    } catch (error: any) {
+      res.status(500).json({ status: "error", message: error.message });
+    }
+  });
+
+  app.post("/api/db/seed", async (req, res) => {
+    const { password } = req.body;
+    if (password !== "admin123") return res.status(401).json({ error: "Unauthorized" });
+
+    try {
+      await db.exec("DROP TABLE IF EXISTS portfolio");
+      await seedDatabase();
+      res.json({ message: "Database re-seeded successfully" });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 
