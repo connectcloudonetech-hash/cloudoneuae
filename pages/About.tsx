@@ -15,11 +15,11 @@ const About: React.FC = () => {
             Our Legacy
           </div>
           <h1 className="text-6xl md:text-9xl font-black text-slate-900 tracking-tighter leading-[0.9]">
-            Cloud One <br />
-            <span className="text-gradient">Originals.</span>
+            Best Web Design <br />
+            <span className="text-gradient">Company UAE.</span>
           </h1>
           <p className="text-xl md:text-2xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
-            Dubai's premier boutique agency dedicated to digital precision and client-centric innovation.
+            Cloud One is a premier Web Design Company in Dubai dedicated to digital precision and client-centric innovation.
           </p>
         </div>
       </section>
@@ -29,7 +29,7 @@ const About: React.FC = () => {
         <div className="grid lg:grid-cols-2 gap-20 items-center">
           <div className="relative group animate-reveal">
             <div className="rounded-[64px] overflow-hidden shadow-[0_50px_100px_-20px_rgba(15,23,42,0.15)] bg-slate-100">
-              <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2671&auto=format&fit=crop" className="w-full object-cover aspect-[4/5] group-hover:scale-105 transition-transform duration-[2s]" alt="Team Dynamics" />
+              <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2671&auto=format&fit=crop" className="w-full object-cover aspect-[4/5] group-hover:scale-105 transition-transform duration-[2s]" alt="Best Web Design Company UAE - Expert Team" />
             </div>
             <div className="absolute -bottom-10 -right-6 bg-slate-900 p-12 rounded-[48px] text-white shadow-2xl border-8 border-white hidden md:block">
               <span className="text-6xl font-black block mb-2 leading-none">5+</span>
@@ -39,15 +39,15 @@ const About: React.FC = () => {
           
           <div className="space-y-12 animate-reveal [animation-delay:200ms]">
             <h2 className="text-5xl md:text-7xl font-black text-slate-900 leading-[0.95] tracking-tighter">
-              Crafting for <br />
-              <span className="text-gradient">High Impact.</span>
+              Website Development <br />
+              <span className="text-gradient">Dubai Experts.</span>
             </h2>
             <div className="space-y-8">
               <p className="text-xl text-slate-500 font-medium leading-relaxed">
-                Cloud One Technologies Dubai isn't just an agency—we are a strategic extension of your brand. Based in the heart of Dubai, we bridge the gap between complex engineering and elegant user interfaces.
+                Cloud One Technologies is the Best Web Design Company UAE. Based in the heart of Dubai, we bridge the gap between complex Website Development Dubai and elegant user interfaces.
               </p>
               <p className="text-xl text-slate-500 font-medium leading-relaxed">
-                Our approach is rooted in transparency and performance. We don't just build websites; we engineer business growth drivers.
+                Our approach is rooted in transparency and performance. We don't just build websites; we engineer business growth through expert Mobile App Development UAE.
               </p>
             </div>
             

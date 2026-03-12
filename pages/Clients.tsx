@@ -1,22 +1,27 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { CLIENTS } from '../constants';
 import { Sparkles, ArrowRight, Building2, Quote, Plus, X, Lock, LogOut, Trash2, Upload, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Client } from '../types';
+import { db } from '../firebase';
+import { 
+  collection, 
+  getDocs, 
+  addDoc, 
+  deleteDoc, 
+  doc, 
+  query, 
+  orderBy, 
+  serverTimestamp 
+} from 'firebase/firestore';
+import { useFirebase } from '../FirebaseProvider';
 
 const Clients: React.FC = () => {
-  // Use localStorage to persist clients
-  const [clientsList, setClientsList] = useState<Client[]>(() => {
-    const saved = localStorage.getItem('cloudone_clients');
-    return saved ? JSON.parse(saved) : CLIENTS;
-  });
-  
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin, login, logout } = useFirebase();
+  const [clientsList, setClientsList] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
   const [showUploader, setShowUploader] = useState(false);
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
 
   // Form State
   const [newName, setNewName] = useState('');
@@ -24,38 +29,48 @@ const Clients: React.FC = () => {
   const [newLogoBase64, setNewLogoBase64] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync with localStorage
-  useEffect(() => {
-    localStorage.setItem('cloudone_clients', JSON.stringify(clientsList));
-  }, [clientsList]);
+  const fetchClients = async () => {
+    try {
+      setIsLoading(true);
+      const q = query(collection(db, 'clients'), orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const mappedData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Client));
+      setClientsList(mappedData);
+    } catch (err) {
+      console.error('Failed to fetch clients:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // Check for admin session on mount
   useEffect(() => {
-    const adminStatus = sessionStorage.getItem('cloudone_admin');
-    if (adminStatus === 'true') setIsAdmin(true);
+    fetchClients();
   }, []);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>, text: string = 'Partner') => {
     e.currentTarget.src = `https://placehold.co/400x400/F1F5F9/1F4E79?text=${encodeURIComponent(text)}`;
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'admin123') {
-      setIsAdmin(true);
-      sessionStorage.setItem('cloudone_admin', 'true');
+    try {
+      await login();
       setShowLogin(false);
-      setPassword('');
-      setError('');
-    } else {
-      setError('Access Denied. Invalid Token.');
+    } catch (err) {
+      alert('Login failed.');
     }
   };
 
-  const handleLogout = () => {
-    setIsAdmin(false);
-    sessionStorage.removeItem('cloudone_admin');
-    setShowUploader(false);
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setShowUploader(false);
+    } catch (err) {
+      alert('Logout failed.');
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,28 +112,39 @@ const Clients: React.FC = () => {
     }
   };
 
-  const handleAddClient = (e: React.FormEvent) => {
+  const handleAddClient = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAdmin) return;
 
-    const newClient: Client = {
-      id: Date.now().toString(),
+    const newClientData = {
       name: newName || 'New Client',
       industry: newIndustry || 'Industry Partner',
-      logoUrl: newLogoBase64 || `https://placehold.co/400x400/F1F5F9/1F4E79?text=${encodeURIComponent(newName || 'Partner')}`
+      logoUrl: newLogoBase64 || `https://placehold.co/400x400/F1F5F9/1F4E79?text=${encodeURIComponent(newName || 'Partner')}`,
+      createdAt: serverTimestamp()
     };
 
-    setClientsList([newClient, ...clientsList]);
-    setShowUploader(false);
-    setNewName('');
-    setNewIndustry('');
-    setNewLogoBase64('');
+    try {
+      await addDoc(collection(db, 'clients'), newClientData);
+      await fetchClients();
+      setShowUploader(false);
+      setNewName('');
+      setNewIndustry('');
+      setNewLogoBase64('');
+    } catch (err) {
+      console.error('Failed to add client:', err);
+      alert('Failed to add partner. Image might be too large.');
+    }
   };
 
-  const handleDeleteClient = (id: string) => {
+  const handleDeleteClient = async (id: string) => {
     if (!isAdmin) return;
     if (window.confirm('Remove this partner from the ecosystem?')) {
-      setClientsList(prev => prev.filter(c => c.id !== id));
+      try {
+        await deleteDoc(doc(db, 'clients', id));
+        await fetchClients();
+      } catch (err) {
+        console.error('Failed to delete client:', err);
+      }
     }
   };
 
@@ -221,12 +247,15 @@ const Clients: React.FC = () => {
             <div className="text-center mb-10">
               <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-[#1F4E79] mx-auto mb-6"><Lock size={32} /></div>
               <h3 className="text-2xl font-black text-slate-900">Admin Login</h3>
+              <p className="text-slate-400 text-xs font-medium mt-2">Sign in with authorized Google account</p>
             </div>
-            <form onSubmit={handleLogin} className="space-y-6">
-              <input type="password" autoFocus required placeholder="Admin Token" className="w-full px-6 py-4 rounded-2xl border bg-slate-50 text-center text-xl font-black outline-none focus:ring-4 focus:ring-blue-500/10" value={password} onChange={(e) => setPassword(e.target.value)} />
-              {error && <p className="text-red-500 text-[10px] font-black uppercase text-center">{error}</p>}
-              <button type="submit" className="w-full py-5 bg-[#1F4E79] text-white font-black rounded-2xl shadow-xl uppercase tracking-widest text-xs">Login</button>
-            </form>
+            <button 
+              onClick={handleLogin}
+              className="w-full py-5 bg-[#1F4E79] text-white font-black rounded-2xl shadow-xl uppercase tracking-widest text-xs flex items-center justify-center gap-3 active:scale-95 transition-transform"
+            >
+              <ShieldCheck size={18} />
+              Authorize with Google
+            </button>
           </div>
         </div>
       )}

@@ -1,8 +1,56 @@
 
-import React from 'react';
-import { Mail, Phone, MapPin, MessageCircle, Send, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { Mail, Phone, MapPin, MessageCircle, Send, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
+import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const Contact: React.FC = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    service: 'Web Designing',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
+    setErrorMessage('');
+
+    try {
+      // Save to Firestore
+      await addDoc(collection(db, 'contacts'), {
+        ...formData,
+        createdAt: serverTimestamp()
+      });
+
+      setSubmitStatus('success');
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        service: 'Web Designing',
+        message: ''
+      });
+    } catch (error) {
+      console.error('Firestore submission error:', error);
+      setSubmitStatus('error');
+      setErrorMessage('Failed to send message. Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="bg-[#F8FAFC]">
       {/* App Header */}
@@ -12,9 +60,9 @@ const Contact: React.FC = () => {
             <Sparkles size={14} className="mr-2" />
             Let's Talk
           </div>
-          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight">Start Your Journey</h1>
+          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight">Best Web Design Company UAE</h1>
           <p className="text-gray-400 font-medium">
-            Ready to scale? We are here to help your brand thrive in Dubai's competitive market.
+            Ready for expert Website Development Dubai or Mobile App Development UAE? We are here to help your brand thrive.
           </p>
         </div>
       </section>
@@ -66,62 +114,106 @@ const Contact: React.FC = () => {
           {/* Form Card */}
           <div className="bg-white p-8 md:p-12 rounded-[48px] shadow-2xl shadow-blue-50/50 border border-white">
             <h3 className="text-2xl font-black text-gray-900 mb-8">Send a Message</h3>
-            <form className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
+            
+            {submitStatus === 'success' ? (
+              <div className="bg-emerald-50 border border-emerald-100 rounded-[32px] p-8 text-center space-y-4 animate-reveal">
+                <div className="w-16 h-16 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-emerald-100">
+                  <CheckCircle2 size={32} />
+                </div>
+                <h4 className="text-xl font-black text-emerald-900">Message Sent!</h4>
+                <p className="text-emerald-700 font-medium">Thank you for reaching out. Our team will get back to you within 24 hours.</p>
+                <button 
+                  onClick={() => setSubmitStatus('idle')}
+                  className="mt-4 px-8 py-3 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all"
+                >
+                  Send Another Message
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {submitStatus === 'error' && (
+                  <div className="bg-red-50 border border-red-100 rounded-2xl p-4 flex items-center text-red-700 space-x-3 animate-reveal">
+                    <AlertCircle size={20} className="shrink-0" />
+                    <p className="text-xs font-bold">{errorMessage}</p>
+                  </div>
+                )}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Full Name</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold"
+                      placeholder="John Doe"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Phone</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold"
+                      placeholder="+971 5X XXX"
+                    />
+                  </div>
+                </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Full Name</label>
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Email Address</label>
                   <input
-                    type="text"
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
                     required
                     className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold"
-                    placeholder="John Doe"
+                    placeholder="name@company.com"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Phone</label>
-                  <input
-                    type="tel"
-                    required
-                    className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold"
-                    placeholder="+971 5X XXX"
-                  />
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Service</label>
+                  <select 
+                    name="service"
+                    value={formData.service}
+                    onChange={handleChange}
+                    className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold appearance-none cursor-pointer"
+                  >
+                    <option>Web Designing</option>
+                    <option>Web Development</option>
+                    <option>App Development</option>
+                    <option>Branding Solutions</option>
+                  </select>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold"
-                  placeholder="name@company.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Service</label>
-                <select className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold appearance-none cursor-pointer">
-                  <option>Web Designing</option>
-                  <option>Web Development</option>
-                  <option>App Development</option>
-                  <option>Branding Solutions</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Project Brief</label>
-                <textarea
-                  rows={4}
-                  required
-                  className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-50 outline-none transition-all resize-none font-bold"
-                  placeholder="Describe your vision..."
-                ></textarea>
-              </div>
-              <button
-                type="submit"
-                className="w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center group active:scale-95 uppercase tracking-widest text-sm"
-              >
-                Launch Request
-                <Send className="ml-3 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-              </button>
-            </form>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Project Brief</label>
+                  <textarea
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    rows={4}
+                    required
+                    className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-50 outline-none transition-all resize-none font-bold"
+                    placeholder="Describe your vision..."
+                  ></textarea>
+                </div>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center group active:scale-95 uppercase tracking-widest text-sm ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {isSubmitting ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
+                  ) : null}
+                  {isSubmitting ? 'Launching...' : 'Launch Request'}
+                  {!isSubmitting && <Send className="ml-3 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </section>

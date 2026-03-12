@@ -30,11 +30,11 @@ const Services: React.FC = () => {
             Engineering Excellence
           </div>
           <h1 className="text-5xl md:text-8xl font-black text-slate-900 tracking-tighter leading-[0.9]">
-            Our Digital <br />
-            <span className="text-gradient">Core.</span>
+            Website Development <br />
+            <span className="text-gradient">Dubai.</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
-            From visionary interface design to robust architectural engineering, we deliver bespoke solutions tailored for the Dubai digital landscape.
+            As the Best Web Design Company UAE, we provide expert Website Development Dubai and Mobile App Development UAE tailored for the modern digital landscape.
           </p>
         </div>
       </section>
@@ -109,9 +109,9 @@ const Services: React.FC = () => {
               <Globe size={14} className="mr-2" />
               Digital Identity Hub
             </div>
-            <h2 className="text-4xl md:text-7xl font-black text-white tracking-tighter leading-none">Your Domain <br /><span className="text-[#34C1E5]">Starts Here.</span></h2>
+            <h2 className="text-4xl md:text-7xl font-black text-white tracking-tighter leading-none">Affordable Website <br /><span className="text-[#34C1E5]">Design Dubai.</span></h2>
             <p className="text-slate-400 font-medium text-xl max-w-2xl mx-auto leading-relaxed">
-              Secure your professional UAE identity with localized .ae domains or global .com extensions today.
+              Secure your professional UAE identity with Affordable Website Design Dubai and localized .ae domains today.
             </p>
             
             <div className="max-w-3xl mx-auto mt-12">

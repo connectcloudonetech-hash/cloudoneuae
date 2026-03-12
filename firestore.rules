@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: portfolio
+    // Fields:
+    //   - title: string (required)
+    //   - description: string
+    //   - imageUrl: string (required)
+    //   - link: string
+    //   - category: string (required, enum: Web, App, Graphics)
+    //   - createdAt: timestamp
+    //
+    // Collection: contacts
+    // Fields:
+    //   - name: string (required)
+    //   - email: string (required, email format)
+    //   - phone: string
+    //   - service: string
+    //   - message: string (required)
+    //   - createdAt: timestamp
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "maple4design@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function isValidPortfolio(data) {
+      return data.keys().hasAll(['title', 'imageUrl', 'category']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.imageUrl is string && data.imageUrl.size() > 0 &&
+             data.category in ['Web', 'App', 'Graphics'];
+    }
+
+    function isValidContact(data) {
+      return data.keys().hasAll(['name', 'email', 'message']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.email is string && data.email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") &&
+             data.message is string && data.message.size() > 0 && data.message.size() < 5000;
+    }
+
+    // Portfolio Rules
+    match /portfolio/{itemId} {
+      allow read: if true; // Publicly readable
+      allow create: if isAdmin() && isValidPortfolio(request.resource.data);
+      allow update: if isAdmin() && isValidPortfolio(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Contacts Rules
+    match /contacts/{inquiryId} {
+      allow read: if isAdmin(); // Only admin can read inquiries
+      allow create: if isValidContact(request.resource.data);
+      allow update: if false; // Inquiries should not be modified
+      allow delete: if isAdmin();
+    }
+
+    // Clients Rules
+    match /clients/{clientId} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

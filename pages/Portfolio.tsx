@@ -3,46 +3,55 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, ArrowRight, FolderOpen, Filter, X, Eye, Lock, ShieldCheck, LogOut, Trash2, Edit3, Upload, ExternalLink, Globe, Link as LinkIcon, Sparkles, CheckCircle2, Database, Terminal, Play, AlertCircle } from 'lucide-react';
 import { Project } from '../types';
-import { INITIAL_PROJECTS } from '../constants';
+import { db } from '../firebase';
+import { 
+  collection, 
+  getDocs, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  query, 
+  orderBy, 
+  serverTimestamp,
+  Timestamp
+} from 'firebase/firestore';
+import { useFirebase } from '../FirebaseProvider';
 
 const Portfolio: React.FC = () => {
+  const { isAdmin, login, logout, user } = useFirebase();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   
   const [filter, setFilter] = useState<'All' | 'Web' | 'App' | 'Graphics'>('All');
   const [showUploader, setShowUploader] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
-  // Fetch projects from API
+  // Fetch projects from Firestore
   const fetchProjects = async () => {
     try {
       setIsLoading(true);
       setFetchError(null);
-      const response = await fetch('/api/portfolio');
-      if (response.ok) {
-        const data = await response.json();
-        // Map database fields to Project interface
-        const mappedData = data.map((item: any) => ({
-          id: item.id.toString(),
-          title: item.title,
-          description: item.description,
-          imageUrl: item.image_url,
-          link: item.live_link,
-          category: item.category
-        }));
-        setProjects(mappedData);
-      } else {
-        setFetchError('Failed to load portfolio items from the server.');
-      }
+      const q = query(collection(db, 'portfolio'), orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const mappedData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title,
+          description: data.description,
+          imageUrl: data.imageUrl,
+          link: data.link,
+          category: data.category
+        } as Project;
+      });
+      setProjects(mappedData);
     } catch (err) {
       console.error('Failed to fetch projects:', err);
-      setFetchError('Network error: Could not reach the server.');
+      setFetchError('Failed to load portfolio items from the cloud.');
     } finally {
       setIsLoading(false);
     }
@@ -60,110 +69,27 @@ const Portfolio: React.FC = () => {
   const [newImageBase64, setNewImageBase64] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // SQL Explorer State
+  // SQL Explorer State (Disabled for Firebase)
   const [activeTab, setActiveTab] = useState<'Portfolio' | 'SQL'>('Portfolio');
-  const [sqlQuery, setSqlQuery] = useState('SELECT * FROM portfolio LIMIT 10;');
-  const [sqlResult, setSqlResult] = useState<any>(null);
-  const [sqlError, setSqlError] = useState('');
-  const [isSqlRunning, setIsSqlRunning] = useState(false);
-  const [dbStatus, setDbStatus] = useState<any>(null);
 
-  const fetchDbStatus = async () => {
-    try {
-      const response = await fetch('/api/db/status');
-      if (response.ok) {
-        setDbStatus(await response.json());
-      }
-    } catch (err) {
-      console.error('Failed to fetch DB status');
-    }
-  };
-
-  useEffect(() => {
-    if (isAdmin && activeTab === 'SQL') {
-      fetchDbStatus();
-    }
-  }, [isAdmin, activeTab]);
-
-  const runSqlQuery = async () => {
-    setIsSqlRunning(true);
-    setSqlError('');
-    setSqlResult(null);
-    try {
-      const response = await fetch('/api/sql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: sqlQuery, password: 'admin123' })
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setSqlResult(data);
-        fetchDbStatus(); // Refresh status after query
-      } else {
-        setSqlError(data.error || 'Failed to execute query');
-      }
-    } catch (err) {
-      setSqlError('Network error occurred. The server might be restarting or unreachable.');
-    } finally {
-      setIsSqlRunning(false);
-    }
-  };
-
-  const handleReseed = async () => {
-    if (!window.confirm('This will DELETE ALL PORTFOLIO DATA and restore defaults. Proceed?')) return;
-    
-    try {
-      const response = await fetch('/api/db/seed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: 'admin123' })
-      });
-      if (response.ok) {
-        alert('Database re-seeded successfully.');
-        fetchProjects();
-        fetchDbStatus();
-      } else {
-        const data = await response.json();
-        alert(`Error: ${data.error}`);
-      }
-    } catch (err) {
-      alert('Network error occurred during re-seeding.');
-    }
-  };
-
-  // Persist admin state for the session
-  useEffect(() => {
-    const adminStatus = sessionStorage.getItem('cloudone_admin');
-    if (adminStatus === 'true') setIsAdmin(true);
-  }, []);
-
-  // Handle ESC key to close modal
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSelectedProject(null);
-    };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, []);
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'admin123') {
-      setIsAdmin(true);
-      sessionStorage.setItem('cloudone_admin', 'true');
+    try {
+      await login();
       setShowLogin(false);
-      setPassword('');
-      setError('');
-    } else {
-      setError('Invalid admin credentials.');
+    } catch (err) {
+      alert('Login failed. Please try again.');
     }
   };
 
-  const handleLogout = () => {
-    setIsAdmin(false);
-    sessionStorage.removeItem('cloudone_admin');
-    setShowUploader(false);
-    setEditingProject(null);
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setShowUploader(false);
+      setEditingProject(null);
+    } catch (err) {
+      alert('Logout failed.');
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -174,8 +100,8 @@ const Portfolio: React.FC = () => {
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1200; 
-          const MAX_HEIGHT = 1200;
+          const MAX_WIDTH = 800; // Reduced for Firestore document size limits (1MB)
+          const MAX_HEIGHT = 800;
           let width = img.width;
           let height = img.height;
 
@@ -198,7 +124,7 @@ const Portfolio: React.FC = () => {
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, width, height);
             ctx.drawImage(img, 0, 0, width, height);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.7); // Lower quality for size
             setNewImageBase64(dataUrl);
           }
         };
@@ -224,42 +150,29 @@ const Portfolio: React.FC = () => {
     const projectData = {
       title: newTitle || 'Untitled Project',
       description: newDesc || 'Project engineered by Cloud One Technologies Dubai.',
-      image_url: newImageBase64 || `https://placehold.co/1200x1200/F1F5F9/1F4E79?text=${encodeURIComponent(newTitle || 'Project')}`,
-      live_link: newLink || '#',
-      category: newCat
+      imageUrl: newImageBase64 || `https://placehold.co/1200x1200/F1F5F9/1F4E79?text=${encodeURIComponent(newTitle || 'Project')}`,
+      link: newLink || '#',
+      category: newCat,
+      createdAt: serverTimestamp()
     };
 
     try {
       if (editingProject) {
-        const response = await fetch(`/api/portfolio/${editingProject.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(projectData)
+        const projectRef = doc(db, 'portfolio', editingProject.id);
+        await updateDoc(projectRef, {
+          ...projectData,
+          createdAt: Timestamp.now() // Keep existing or update
         });
-        if (response.ok) {
-          await fetchProjects();
-          resetForm();
-        } else {
-          const data = await response.json();
-          alert(`Failed to update project: ${data.error || 'Unknown error'}`);
-        }
+        await fetchProjects();
+        resetForm();
       } else {
-        const response = await fetch('/api/portfolio', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(projectData)
-        });
-        if (response.ok) {
-          await fetchProjects();
-          resetForm();
-        } else {
-          const data = await response.json();
-          alert(`Failed to add project: ${data.error || 'Unknown error'}. This might be due to a large image file.`);
-        }
+        await addDoc(collection(db, 'portfolio'), projectData);
+        await fetchProjects();
+        resetForm();
       }
     } catch (err) {
       console.error('Failed to save project:', err);
-      alert('Network error: Failed to save project. Please try again.');
+      alert('Failed to save project. If you uploaded an image, it might be too large for the database.');
     }
   };
 
@@ -280,15 +193,12 @@ const Portfolio: React.FC = () => {
     if (!isAdmin) return;
     if (window.confirm('Are you sure you want to permanently delete this project?')) {
       try {
-        const response = await fetch(`/api/portfolio/${id}`, {
-          method: 'DELETE'
-        });
-        if (response.ok) {
-          await fetchProjects();
-          if (editingProject?.id === id) resetForm();
-        }
+        await deleteDoc(doc(db, 'portfolio', id));
+        await fetchProjects();
+        if (editingProject?.id === id) resetForm();
       } catch (err) {
         console.error('Failed to delete project:', err);
+        alert('Failed to delete project. Check your permissions.');
       }
     }
   };
@@ -301,8 +211,8 @@ const Portfolio: React.FC = () => {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-10 md:mb-16 gap-6 md:gap-8 animate-reveal">
           <div className="text-center md:text-left space-y-2">
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-slate-900 tracking-tighter">Selected <span className="text-gradient">Works.</span></h1>
-            <p className="text-slate-500 font-medium text-base md:text-lg">Where high-end design meets Dubai's digital ambition.</p>
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-slate-900 tracking-tighter">Best Web Design <span className="text-gradient">Company UAE.</span></h1>
+            <p className="text-slate-500 font-medium text-base md:text-lg">Showcasing our expert Website Development Dubai and Mobile App Development UAE projects.</p>
           </div>
 
           {isAdmin ? (
@@ -331,11 +241,20 @@ const Portfolio: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div className="hidden md:block">
-              <div className="px-6 py-3 bg-slate-50 border border-slate-100 rounded-full flex items-center gap-3">
-                <ShieldCheck size={16} className="text-[#1F4E79]" />
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Verified Portfolio</span>
+            <div className="flex items-center gap-4">
+              <div className="hidden md:block">
+                <div className="px-6 py-3 bg-slate-50 border border-slate-100 rounded-full flex items-center gap-3">
+                  <ShieldCheck size={16} className="text-[#1F4E79]" />
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Verified Portfolio</span>
+                </div>
               </div>
+              <button 
+                onClick={() => setShowLogin(true)}
+                className="p-4 bg-slate-100 text-slate-400 rounded-3xl hover:bg-slate-200 transition-all"
+                title="Admin Login"
+              >
+                <Lock size={20} />
+              </button>
             </div>
           )}
         </div>
@@ -364,225 +283,93 @@ const Portfolio: React.FC = () => {
         {isAdmin && showUploader && (
           <div className="mb-16 p-6 md:p-12 bg-white rounded-[40px] md:rounded-[56px] shadow-2xl border border-slate-100 animate-reveal">
             <div className="flex items-center justify-between mb-10">
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => setActiveTab('Portfolio')}
-                  className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'Portfolio' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
-                >
-                  <FolderOpen size={14} /> Portfolio Manager
-                </button>
-                <button 
-                  onClick={() => setActiveTab('SQL')}
-                  className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'SQL' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
-                >
-                  <Terminal size={14} /> SQL Explorer
-                </button>
-              </div>
-              <h2 className="hidden md:flex text-2xl font-black text-slate-900 items-center">
-                {activeTab === 'Portfolio' ? (
-                  <><FolderOpen className="mr-4 text-[#34C1E5]" /> {editingProject ? 'Update Project' : 'Management Console'}</>
-                ) : (
-                  <><Database className="mr-4 text-[#34C1E5]" /> SQL Engine</>
-                )}
+              <h2 className="text-2xl font-black text-slate-900 flex items-center">
+                <FolderOpen className="mr-4 text-[#34C1E5]" /> {editingProject ? 'Update Project' : 'Portfolio Management Console'}
               </h2>
             </div>
 
-            {activeTab === 'Portfolio' ? (
-              <form onSubmit={handleAddOrUpdateProject} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {/* ... existing form ... */}
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Project Title</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Luxury Real Estate"
-                    className="w-full px-8 py-5 rounded-3xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Category</label>
-                  <select
-                    className="w-full px-8 py-5 rounded-3xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900 appearance-none cursor-pointer"
-                    value={newCat}
-                    onChange={(e) => setNewCat(e.target.value as any)}
-                  >
-                    <option value="Web">Web Development</option>
-                    <option value="App">Mobile App</option>
-                    <option value="Graphics">Graphics & Branding</option>
-                  </select>
-                </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Display Media</label>
-                  <div 
-                    onClick={() => fileInputRef.current?.click()}
-                    className={`w-full h-[68px] border-2 border-dashed rounded-3xl flex items-center px-6 cursor-pointer transition-all ${newImageBase64 ? 'border-[#34C1E5] bg-blue-50/30' : 'border-slate-200 bg-slate-50 hover:border-[#1F4E79]'}`}
-                  >
-                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
-                    {newImageBase64 ? (
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <img src={newImageBase64} className="w-10 h-10 object-cover rounded-lg" alt="Preview" />
-                        <span className="text-xs font-bold text-[#1F4E79] truncate">{editingProject ? 'Replace Existing Media' : 'Optimized Image Loaded'}</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <Upload size={18} className="text-slate-400" />
-                        <span className="text-sm font-bold text-slate-400">Choose Image</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-3 lg:col-span-1">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Live URL (Optional)</label>
-                  <div className="relative">
-                    <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 w-4 h-4" />
-                    <input
-                      type="url"
-                      placeholder="https://..."
-                      className="w-full pl-14 pr-8 py-5 rounded-3xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900"
-                      value={newLink}
-                      onChange={(e) => setNewLink(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="lg:col-span-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Full Case Study / Description</label>
-                  <textarea
-                    rows={2}
-                    className="w-full mt-3 px-8 py-5 rounded-3xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900 resize-none"
-                    placeholder="Describe the solution engineered by Cloud One Technologies..."
-                    value={newDesc}
-                    onChange={(e) => setNewDesc(e.target.value)}
-                  />
-                </div>
-                <div className="md:col-span-3 flex justify-end gap-4">
-                  {editingProject && (
-                    <button 
-                      type="button" 
-                      onClick={resetForm}
-                      className="px-10 py-6 bg-slate-100 text-slate-500 font-black rounded-3xl uppercase tracking-widest text-xs active:scale-95 hover:bg-slate-200 transition-colors"
-                    >
-                      Cancel Edit
-                    </button>
-                  )}
-                  <button type="submit" className="px-16 py-6 bg-[#1F4E79] text-white font-black rounded-3xl uppercase tracking-widest text-xs shadow-2xl active:scale-95 hover:bg-[#153450] transition-colors">
-                    {editingProject ? 'Save Changes' : 'Publish to Gallery'}
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="space-y-8">
-                {/* Database Status Bar */}
-                {dbStatus && (
-                  <div className="flex flex-wrap gap-4 p-4 bg-slate-50 rounded-3xl border border-slate-100 animate-reveal">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border border-slate-100">
-                      <Database size={14} className="text-emerald-500" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status:</span>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">{dbStatus.status}</span>
-                    </div>
-                    <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border border-slate-100">
-                      <FolderOpen size={14} className="text-blue-500" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tables:</span>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">{dbStatus.tables?.join(', ')}</span>
-                    </div>
-                    <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border border-slate-100">
-                      <Sparkles size={14} className="text-amber-500" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Records:</span>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">{dbStatus.records}</span>
-                    </div>
-                    <button 
-                      onClick={handleReseed}
-                      className="ml-auto px-4 py-2 bg-red-50 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-100 transition-colors border border-red-100"
-                    >
-                      Reset Database
-                    </button>
-                  </div>
-                )}
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Raw SQL Query</label>
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-300 uppercase tracking-widest">
-                      <Database size={12} /> SQLite 3.x
-                    </div>
-                  </div>
-                  <div className="relative group">
-                    <textarea
-                      rows={4}
-                      className="w-full px-8 py-6 rounded-3xl border border-slate-100 bg-slate-900 text-emerald-400 font-mono text-sm focus:ring-4 focus:ring-blue-500/10 outline-none transition-all resize-none shadow-inner"
-                      value={sqlQuery}
-                      onChange={(e) => setSqlQuery(e.target.value)}
-                    />
-                    <button 
-                      onClick={runSqlQuery}
-                      disabled={isSqlRunning}
-                      className="absolute bottom-6 right-6 px-6 py-3 bg-emerald-500 text-white font-black rounded-2xl flex items-center gap-2 hover:bg-emerald-600 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 shadow-xl"
-                    >
-                      {isSqlRunning ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Play size={14} fill="currentColor" />}
-                      Run Query
-                    </button>
-                  </div>
-                </div>
-
-                {sqlError && (
-                  <div className="p-6 bg-red-50 border border-red-100 rounded-3xl flex items-start gap-4 text-red-600 animate-reveal">
-                    <AlertCircle className="shrink-0 mt-1" size={20} />
-                    <div>
-                      <p className="font-black uppercase tracking-widest text-[10px] mb-1">Execution Error</p>
-                      <p className="font-mono text-xs">{sqlError}</p>
-                    </div>
-                  </div>
-                )}
-
-                {sqlResult && (
-                  <div className="space-y-4 animate-reveal">
-                    <div className="flex items-center justify-between px-4">
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Query Result</h4>
-                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
-                        {Array.isArray(sqlResult) ? `${sqlResult.length} Rows Returned` : 'Command Executed'}
-                      </span>
-                    </div>
-                    <div className="bg-slate-50 rounded-3xl border border-slate-100 overflow-hidden">
-                      <div className="max-h-[400px] overflow-auto no-scrollbar">
-                        {Array.isArray(sqlResult) ? (
-                          sqlResult.length > 0 ? (
-                            <table className="w-full text-left border-collapse">
-                              <thead>
-                                <tr className="bg-slate-100/50 border-b border-slate-100">
-                                  {Object.keys(sqlResult[0]).map(key => (
-                                    <th key={key} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">{key}</th>
-                                  ))}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {sqlResult.map((row, i) => (
-                                  <tr key={i} className="border-b border-slate-100/50 hover:bg-white transition-colors">
-                                    {Object.values(row).map((val: any, j) => (
-                                      <td key={j} className="px-6 py-4 font-mono text-xs text-slate-600 truncate max-w-[200px]" title={String(val)}>
-                                        {val === null ? <span className="text-slate-300 italic">null</span> : String(val)}
-                                      </td>
-                                    ))}
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          ) : (
-                            <div className="p-12 text-center text-slate-400 font-medium">Query returned no results.</div>
-                          )
-                        ) : (
-                          <div className="p-12 text-center">
-                             <CheckCircle2 className="mx-auto w-12 h-12 text-emerald-500 mb-4" />
-                             <p className="text-slate-900 font-black uppercase tracking-widest text-xs">{sqlResult.message}</p>
-                             {sqlResult.result && <p className="text-slate-400 text-[10px] mt-2 font-mono">Changes: {sqlResult.result.changes} | LastID: {sqlResult.result.lastID}</p>}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
+            <form onSubmit={handleAddOrUpdateProject} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Project Title</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Luxury Real Estate"
+                  className="w-full px-8 py-5 rounded-3xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                />
               </div>
-            )}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Category</label>
+                <select
+                  className="w-full px-8 py-5 rounded-3xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900 appearance-none cursor-pointer"
+                  value={newCat}
+                  onChange={(e) => setNewCat(e.target.value as any)}
+                >
+                  <option value="Web">Web Development</option>
+                  <option value="App">Mobile App</option>
+                  <option value="Graphics">Graphics & Branding</option>
+                </select>
+              </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Display Media</label>
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`w-full h-[68px] border-2 border-dashed rounded-3xl flex items-center px-6 cursor-pointer transition-all ${newImageBase64 ? 'border-[#34C1E5] bg-blue-50/30' : 'border-slate-200 bg-slate-50 hover:border-[#1F4E79]'}`}
+                >
+                  <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+                  {newImageBase64 ? (
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <img src={newImageBase64} className="w-10 h-10 object-cover rounded-lg" alt="Preview" />
+                      <span className="text-xs font-bold text-[#1F4E79] truncate">{editingProject ? 'Replace Existing Media' : 'Optimized Image Loaded'}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <Upload size={18} className="text-slate-400" />
+                      <span className="text-sm font-bold text-slate-400">Choose Image</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-3 lg:col-span-1">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Live URL (Optional)</label>
+                <div className="relative">
+                  <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 w-4 h-4" />
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    className="w-full pl-14 pr-8 py-5 rounded-3xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900"
+                    value={newLink}
+                    onChange={(e) => setNewLink(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="lg:col-span-2">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Full Case Study / Description</label>
+                <textarea
+                  rows={2}
+                  className="w-full mt-3 px-8 py-5 rounded-3xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900 resize-none"
+                  placeholder="Describe the solution engineered by Cloud One Technologies..."
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                />
+              </div>
+              <div className="md:col-span-3 flex justify-end gap-4">
+                {editingProject && (
+                  <button 
+                    type="button" 
+                    onClick={resetForm}
+                    className="px-10 py-6 bg-slate-100 text-slate-500 font-black rounded-3xl uppercase tracking-widest text-xs active:scale-95 hover:bg-slate-200 transition-colors"
+                  >
+                    Cancel Edit
+                  </button>
+                )}
+                <button type="submit" className="px-16 py-6 bg-[#1F4E79] text-white font-black rounded-3xl uppercase tracking-widest text-xs shadow-2xl active:scale-95 hover:bg-[#153450] transition-colors">
+                  {editingProject ? 'Save Changes' : 'Publish to Gallery'}
+                </button>
+              </div>
+            </form>
           </div>
         )}
 
@@ -795,21 +582,15 @@ const Portfolio: React.FC = () => {
               <div className="text-center mb-10">
                 <div className="w-20 h-20 bg-blue-50 rounded-[28px] flex items-center justify-center text-[#1F4E79] mx-auto mb-6 shadow-sm"><Lock size={36} /></div>
                 <h3 className="text-2xl font-black text-slate-900 tracking-tight">Management Access</h3>
-                <p className="text-slate-400 text-xs font-medium mt-2">Enter credentials to modify the ecosystem</p>
+                <p className="text-slate-400 text-xs font-medium mt-2">Sign in with authorized Google account</p>
               </div>
-              <form onSubmit={handleLogin} className="space-y-6">
-                <input 
-                  type="password" 
-                  autoFocus 
-                  required 
-                  placeholder="Admin Access Token" 
-                  className="w-full px-8 py-5 rounded-3xl border border-slate-100 bg-slate-50 text-center text-xl font-black outline-none focus:ring-4 focus:ring-blue-500/10 transition-all" 
-                  value={password} 
-                  onChange={(e) => setPassword(e.target.value)} 
-                />
-                {error && <p className="text-red-500 text-[10px] font-black uppercase text-center tracking-widest">{error}</p>}
-                <button type="submit" className="w-full py-6 bg-[#1F4E79] text-white font-black rounded-3xl shadow-xl uppercase tracking-widest text-xs active:scale-95 transition-transform">Authorize</button>
-              </form>
+              <button 
+                onClick={handleLogin}
+                className="w-full py-6 bg-[#1F4E79] text-white font-black rounded-3xl shadow-xl uppercase tracking-widest text-xs active:scale-95 transition-transform flex items-center justify-center gap-3"
+              >
+                <ShieldCheck size={20} />
+                Authorize with Google
+              </button>
             </div>
           </div>
         )}

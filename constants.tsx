@@ -6,14 +6,14 @@ import { Service, Package, Project, Client } from './types';
 export const SERVICES: Service[] = [
   {
     id: 'web-design',
-    title: 'Web Designing',
+    title: 'Web Design Company in Dubai',
     description: 'Modern, responsive and user-friendly website designs that captivate your audience.',
     icon: 'Layout',
     details: ['Responsive Design', 'UI/UX Optimization', 'Mobile Friendly', 'Corporate Branding']
   },
   {
     id: 'web-dev',
-    title: 'Web Development',
+    title: 'Website Development Dubai',
     description: 'Fast, secure and scalable web applications built with cutting-edge technologies.',
     icon: 'Code',
     details: ['Custom CMS', 'E-commerce Solutions', 'PHP/Laravel/React', 'API Integration']
@@ -27,7 +27,7 @@ export const SERVICES: Service[] = [
   },
   {
     id: 'app-design',
-    title: 'App Design',
+    title: 'Mobile App Development UAE',
     description: 'Custom Android & iOS app UI/UX solutions tailored for business growth.',
     icon: 'Smartphone',
     details: ['iOS & Android Design', 'Prototype Development', 'User Flow Mapping', 'App Store Ready']
@@ -137,9 +137,9 @@ export const CLIENTS: Client[] = [
 ];
 
 export const WHY_CHOOSE_US = [
-  { title: 'Dubai Based Company', icon: <MapPin className="text-blue-600" /> },
-  { title: 'Affordable Packages', icon: <ShieldCheck className="text-blue-600" /> },
-  { title: 'Modern Designs', icon: <Layout className="text-blue-600" /> },
+  { title: 'Best Web Design Company UAE', icon: <MapPin className="text-blue-600" /> },
+  { title: 'Affordable Website Design Dubai', icon: <ShieldCheck className="text-blue-600" /> },
+  { title: 'Website Development Dubai', icon: <Layout className="text-blue-600" /> },
   { title: 'Fast Delivery', icon: <Zap className="text-blue-600" /> },
   { title: 'Dedicated Support', icon: <HeartHandshake className="text-blue-600" /> }
 ];

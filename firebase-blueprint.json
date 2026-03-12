@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "PortfolioItem": {
+      "title": "Portfolio Item",
+      "description": "A project showcased in the portfolio",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Project title" },
+        "description": { "type": "string", "description": "Project description" },
+        "imageUrl": { "type": "string", "description": "URL to the project image" },
+        "link": { "type": "string", "description": "Live link to the project" },
+        "category": { "type": "string", "enum": ["Web", "App", "Graphics"], "description": "Project category" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["title", "imageUrl", "category"]
+    },
+    "ContactInquiry": {
+      "title": "Contact Inquiry",
+      "description": "A message sent via the contact form",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Sender's name" },
+        "email": { "type": "string", "format": "email", "description": "Sender's email" },
+        "phone": { "type": "string", "description": "Sender's phone number" },
+        "service": { "type": "string", "description": "Service interested in" },
+        "message": { "type": "string", "description": "Message content" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of inquiry" }
+      },
+      "required": ["name", "email", "message"]
+    },
+    "ClientPartner": {
+      "title": "Client Partner",
+      "description": "A partner company logo and info",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Company name" },
+        "industry": { "type": "string", "description": "Industry sector" },
+        "logoUrl": { "type": "string", "description": "URL to the company logo" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of registration" }
+      },
+      "required": ["name", "logoUrl"]
+    }
+  },
+  "firestore": {
+    "/portfolio": {
+      "schema": "PortfolioItem",
+      "description": "Collection of portfolio projects"
+    },
+    "/contacts": {
+      "schema": "ContactInquiry",
+      "description": "Collection of contact form submissions"
+    },
+    "/clients": {
+      "schema": "ClientPartner",
+      "description": "Collection of client partners"
+    }
+  }
+}
