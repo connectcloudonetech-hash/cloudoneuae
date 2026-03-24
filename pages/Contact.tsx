@@ -7,7 +7,7 @@ const Contact: React.FC = () => {
     name: '',
     email: '',
     phone: '',
-    service: 'Web Designing',
+    service: 'Web Design',
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,7 +41,7 @@ const Contact: React.FC = () => {
           name: '',
           email: '',
           phone: '',
-          service: 'Web Designing',
+          service: 'Web Design',
           message: ''
         });
       } else {
@@ -189,10 +189,12 @@ const Contact: React.FC = () => {
                     onChange={handleChange}
                     className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold appearance-none cursor-pointer"
                   >
-                    <option>Web Designing</option>
-                    <option>Web Development</option>
-                    <option>App Development</option>
-                    <option>Branding Solutions</option>
+                    <option>Web Design</option>
+                    <option>Website Development</option>
+                    <option>E-Commerce Website</option>
+                    <option>Mobile App Development</option>
+                    <option>Domain & Hosting</option>
+                    <option>Graphics Design</option>
                   </select>
                 </div>
                 <div className="space-y-2">

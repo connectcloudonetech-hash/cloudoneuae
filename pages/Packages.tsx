@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PACKAGES } from '../constants';
 import { CheckCircle2, ShieldCheck, Zap, Headphones, Sparkles, Globe2, Server, Mail, MessageCircle, Smartphone, Globe, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -10,6 +10,19 @@ interface PackagesProps {
 
 const Packages: React.FC<PackagesProps> = ({ initialRegion = 'UAE' }) => {
   const [region, setRegion] = useState<'UAE' | 'India'>(initialRegion);
+
+  useEffect(() => {
+    document.title = "Web Design Packages Dubai | Affordable Pricing | Cloud One Technologies";
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute("content", "Choose the best web design and development packages for your business in UAE and India. Affordable Website Design Dubai with domain, hosting, and SSL.");
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = "description";
+      meta.content = "Choose the best web design and development packages for your business in UAE and India. Affordable Website Design Dubai with domain, hosting, and SSL.";
+      document.head.appendChild(meta);
+    }
+  }, []);
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen py-16 px-6">

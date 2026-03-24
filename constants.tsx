@@ -6,28 +6,28 @@ import { Service, Package, Project, Client } from './types';
 export const SERVICES: Service[] = [
   {
     id: 'web-design',
-    title: 'Web Design Company in Dubai',
+    title: 'Web Design',
     description: 'Modern, responsive and user-friendly website designs that captivate your audience.',
     icon: 'Layout',
     details: ['Responsive Design', 'UI/UX Optimization', 'Mobile Friendly', 'Corporate Branding']
   },
   {
     id: 'web-dev',
-    title: 'Website Development Dubai',
+    title: 'Website Development',
     description: 'Fast, secure and scalable web applications built with cutting-edge technologies.',
     icon: 'Code',
     details: ['Custom CMS', 'E-commerce Solutions', 'PHP/Laravel/React', 'API Integration']
   },
   {
     id: 'e-commerce',
-    title: 'E-commerce Solutions',
+    title: 'E-Commerce Website',
     description: 'High-conversion online stores with seamless payment integration and advanced management.',
     icon: 'ShoppingCart',
     details: ['Secure Payment Gateways', 'Inventory Management', 'Order Tracking Systems', 'Customer Analytics']
   },
   {
     id: 'app-design',
-    title: 'Mobile App Development UAE',
+    title: 'Mobile App Development',
     description: 'Custom Android & iOS app UI/UX solutions tailored for business growth.',
     icon: 'Smartphone',
     details: ['iOS & Android Design', 'Prototype Development', 'User Flow Mapping', 'App Store Ready']

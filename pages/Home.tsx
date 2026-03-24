@@ -19,7 +19,7 @@ const Home: React.FC = () => {
     name: '',
     email: '',
     phone: '',
-    service: 'Web Designing',
+    service: 'Web Design',
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,7 +46,7 @@ const Home: React.FC = () => {
       });
       if (response.ok) {
         setSubmitStatus('success');
-        setFormData({ name: '', email: '', phone: '', service: 'Web Designing', message: '' });
+        setFormData({ name: '', email: '', phone: '', service: 'Web Design', message: '' });
       } else {
         setSubmitStatus('error');
       }
@@ -64,6 +64,17 @@ const Home: React.FC = () => {
 
     const savedClients = localStorage.getItem('cloudone_clients');
     if (savedClients) setClientsList(JSON.parse(savedClients));
+
+    document.title = "Cloud One Technologies | Best Web Design Company UAE | Website Development Dubai";
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute("content", "Cloud One Technologies is the leading Web Design Company in Dubai. We specialize in Website Development Dubai, Mobile App Development UAE, and custom digital solutions for global brands.");
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = "description";
+      meta.content = "Cloud One Technologies is the leading Web Design Company in Dubai. We specialize in Website Development Dubai, Mobile App Development UAE, and custom digital solutions for global brands.";
+      document.head.appendChild(meta);
+    }
   }, []);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>, text: string = 'Partner') => {
@@ -401,10 +412,12 @@ const Home: React.FC = () => {
                     onChange={handleContactChange}
                     className="w-full px-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-white focus:bg-white/10 focus:border-[#34C1E5] outline-none transition-all font-bold appearance-none cursor-pointer"
                   >
-                    <option className="bg-slate-900">Web Designing</option>
-                    <option className="bg-slate-900">Web Development</option>
-                    <option className="bg-slate-900">App Development</option>
-                    <option className="bg-slate-900">Branding Solutions</option>
+                    <option className="bg-slate-900">Web Design</option>
+                    <option className="bg-slate-900">Website Development</option>
+                    <option className="bg-slate-900">E-Commerce Website</option>
+                    <option className="bg-slate-900">Mobile App Development</option>
+                    <option className="bg-slate-900">Domain & Hosting</option>
+                    <option className="bg-slate-900">Graphics Design</option>
                   </select>
                   <textarea
                     name="message"

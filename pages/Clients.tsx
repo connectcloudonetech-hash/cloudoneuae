@@ -56,6 +56,17 @@ const Clients: React.FC = () => {
 
   useEffect(() => {
     fetchClients();
+    
+    document.title = "Our Clients & Partners | Cloud One Technologies Ecosystem";
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute("content", "The visionary brands within the Cloud One ecosystem. Trusted by global brands for Website Development Dubai and digital transformation.");
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = "description";
+      meta.content = "The visionary brands within the Cloud One ecosystem. Trusted by global brands for Website Development Dubai and digital transformation.";
+      document.head.appendChild(meta);
+    }
   }, []);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>, text: string = 'Partner') => {

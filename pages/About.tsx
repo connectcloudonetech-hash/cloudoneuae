@@ -1,9 +1,22 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Target, Lightbulb, Users, CheckCircle2, HeartHandshake, Sparkles, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const About: React.FC = () => {
+  useEffect(() => {
+    document.title = "About Cloud One Technologies | Best Web Design Company UAE";
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute("content", "Cloud One Technologies is a premier Web Design Company in Dubai dedicated to digital precision and client-centric innovation. Expert Website Development Dubai.");
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = "description";
+      meta.content = "Cloud One Technologies is a premier Web Design Company in Dubai dedicated to digital precision and client-centric innovation. Expert Website Development Dubai.";
+      document.head.appendChild(meta);
+    }
+  }, []);
+
   return (
     <div className="bg-[#FDFDFE] min-h-screen py-10">
       {/* Immersive Header */}

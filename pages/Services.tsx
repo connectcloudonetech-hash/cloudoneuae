@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SERVICES } from '../constants';
 import * as Icons from 'lucide-react';
 import { CheckCircle2, Sparkles, Globe, ArrowRight } from 'lucide-react';
@@ -15,6 +15,19 @@ const serviceImages: Record<string, string> = {
 };
 
 const Services: React.FC = () => {
+  useEffect(() => {
+    document.title = "Our Services | Website Development Dubai | Cloud One Technologies";
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute("content", "Explore our expert services including Web Design, Website Development Dubai, E-commerce solutions, and Mobile App Development UAE tailored for modern digital growth.");
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = "description";
+      meta.content = "Explore our expert services including Web Design, Website Development Dubai, E-commerce solutions, and Mobile App Development UAE tailored for modern digital growth.";
+      document.head.appendChild(meta);
+    }
+  }, []);
+
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     e.currentTarget.src = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2426&auto=format&fit=crop';
   };

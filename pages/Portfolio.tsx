@@ -73,6 +73,17 @@ const Portfolio: React.FC = () => {
 
   useEffect(() => {
     fetchProjects();
+    
+    document.title = "Our Portfolio | Best Web Design Company UAE | Cloud One Technologies";
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute("content", "Showcasing our expert Website Development Dubai and Mobile App Development UAE projects. See how we engineer business growth through digital precision.");
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = "description";
+      meta.content = "Showcasing our expert Website Development Dubai and Mobile App Development UAE projects. See how we engineer business growth through digital precision.";
+      document.head.appendChild(meta);
+    }
   }, []);
 
   // Form State
