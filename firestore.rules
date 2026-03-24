@@ -73,6 +73,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     
+    // Connection Test Rules
+    match /_connection_test_/{docId} {
+      allow read: if true;
+    }
+    
     // Default Deny
     match /{document=**} {
       allow read, write: if false;

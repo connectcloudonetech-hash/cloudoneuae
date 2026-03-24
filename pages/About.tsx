@@ -14,7 +14,7 @@ const About: React.FC = () => {
             <Sparkles size={14} className="mr-2" />
             Our Legacy
           </div>
-          <h1 className="text-6xl md:text-9xl font-black text-slate-900 tracking-tighter leading-[0.9]">
+          <h1 className="text-6xl md:text-9xl font-black text-slate-900 tracking-tighter leading-[1.1] pb-4">
             Best Web Design <br />
             <span className="text-gradient">Company UAE.</span>
           </h1>
@@ -38,7 +38,7 @@ const About: React.FC = () => {
           </div>
           
           <div className="space-y-12 animate-reveal [animation-delay:200ms]">
-            <h2 className="text-5xl md:text-7xl font-black text-slate-900 leading-[0.95] tracking-tighter">
+            <h2 className="text-5xl md:text-7xl font-black text-slate-900 leading-[1.1] tracking-tighter pb-4">
               Website Development <br />
               <span className="text-gradient">Dubai Experts.</span>
             </h2>
@@ -99,7 +99,7 @@ const About: React.FC = () => {
       
       {/* Final CTA */}
       <section className="py-32 max-w-5xl mx-auto px-6 text-center">
-         <h2 className="text-4xl md:text-6xl font-black text-slate-900 mb-10 tracking-tight leading-tight">Ready to collaborate <br /> with the best?</h2>
+         <h2 className="text-4xl md:text-6xl font-black text-slate-900 mb-10 tracking-tight leading-[1.1]">Ready to collaborate <br /> with the best?</h2>
          <Link to="/contact" className="btn-primary px-16 py-6 text-white font-black rounded-full shadow-2xl shadow-blue-900/20 inline-flex items-center gap-4 text-lg hover:scale-105 transition-transform active:scale-95">
             Let's Start <ArrowRight />
          </Link>

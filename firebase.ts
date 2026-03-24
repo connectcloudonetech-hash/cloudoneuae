@@ -16,11 +16,14 @@ async function testConnection() {
     // Attempt to get a dummy document to verify connection
     await getDocFromServer(doc(db, '_connection_test_', 'init'));
     console.log("Firebase connection verified.");
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Firebase is offline. Please check your configuration and internet connection.");
+  } catch (error: any) {
+    if (error.message?.includes('the client is offline') || error.message?.includes('unavailable')) {
+      console.warn("Firestore is currently unavailable. This may be transient or due to initial provisioning. The client will operate in offline mode.");
+    } else if (error.code === 'permission-denied' || error.message?.includes('insufficient permissions')) {
+      console.log("Firestore connection established (Permission Denied is expected for the test document).");
+    } else {
+      console.error("Firestore connection error:", error.message);
     }
-    // Other errors (like permission denied) are expected if the doc doesn't exist or rules are strict
   }
 }
 

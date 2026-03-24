@@ -10,7 +10,8 @@ export interface Service {
 export interface Package {
   id: string;
   name: string;
-  price: string;
+  priceUAE: string;
+  priceIndia: string;
   features: string[];
   recommended?: boolean;
 }

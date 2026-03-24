@@ -5,35 +5,48 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="description" content="Cloud One Technologies - The Best Web Design Company UAE. We offer expert Website Development Dubai and Mobile App Development UAE at competitive prices." />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%231F4E79'/><circle cx='50' cy='45' r='30' fill='white'/><path d='M24 54C24 54 30.5 45.5 37 45.5C43.5 45.5 50 54 50 54C50 54 56.5 45.5 63 45.5C69.5 45.5 76 54 76 54V62.5C76 71 67.5 75.5 50 75.5C32.5 75.5 24 71.25 24 62.5V54Z' fill='%2334C1E5'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/connectcloudonetech-hash/cloudoneuae/44e513ea14d013e92e082b6745214388afa534d8/images/cloudonetechlogo.svg">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#1F4E79">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Cloud One">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%231F4E79'/><circle cx='50' cy='45' r='30' fill='white'/><path d='M24 54C24 54 30.5 45.5 37 45.5C43.5 45.5 50 54 50 54C50 54 56.5 45.5 63 45.5C69.5 45.5 76 54 76 54V62.5C76 71 67.5 75.5 50 75.5C32.5 75.5 24 71.25 24 62.5V54Z' fill='%2334C1E5'/></svg>">
-    <title>Best Web Design Company UAE | Website Development Dubai | Cloud One</title>
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/connectcloudonetech-hash/cloudoneuae/44e513ea14d013e92e082b6745214388afa534d8/images/cloudonetechlogo.svg">
+    <title>Best Web Design Company UAE | Website Development Dubai | Cloud One Technologies</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
       :root {
         --brand-dark: #1F4E79;
         --brand-light: #34C1E5;
         --bg-app: #FDFDFE;
+        --f-display: 'Space Grotesk', sans-serif;
+        --f-body: 'Inter', sans-serif;
       }
       body {
-        font-family: 'Outfit', sans-serif;
+        font-family: var(--f-body);
         -webkit-tap-highlight-color: transparent;
         background-color: var(--bg-app);
         color: #0F172A;
         overflow-x: hidden;
       }
+      .font-display { font-family: var(--f-display); }
       .glass {
-        background: rgba(255, 255, 255, 0.75);
+        background: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(20px) saturate(160%);
         -webkit-backdrop-filter: blur(20px) saturate(160%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .glass-dark {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(20px) saturate(160%);
+        -webkit-backdrop-filter: blur(20px) saturate(160%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .hero-gradient {
+        background: radial-gradient(circle at 0% 0%, #1F4E79 0%, #0F172A 100%);
       }
       .app-card {
         border-radius: 42px;
@@ -51,12 +64,23 @@
         box-shadow: 0 12px 24px -8px rgba(31, 78, 121, 0.4);
       }
       .text-gradient {
-        background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-light) 100%);
+        background: linear-gradient(135deg, #34C1E5 0%, #1F4E79 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
       }
+      .text-glow {
+        text-shadow: 0 0 30px rgba(52, 193, 229, 0.3);
+      }
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+      }
+      .animate-float {
+        animation: float 6s ease-in-out infinite;
+      }
 
       @keyframes reveal {
         from { opacity: 0; transform: translateY(30px) scale(0.98); }

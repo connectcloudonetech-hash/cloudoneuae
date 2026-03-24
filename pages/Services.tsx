@@ -29,7 +29,7 @@ const Services: React.FC = () => {
             <Sparkles size={14} className="mr-2 text-[#34C1E5]" />
             Engineering Excellence
           </div>
-          <h1 className="text-5xl md:text-8xl font-black text-slate-900 tracking-tighter leading-[0.9]">
+          <h1 className="text-5xl md:text-8xl font-black text-slate-900 tracking-tighter leading-[1.1] pb-4">
             Website Development <br />
             <span className="text-gradient">Dubai.</span>
           </h1>
@@ -54,7 +54,7 @@ const Services: React.FC = () => {
                     <div className={`w-20 h-20 rounded-[32px] flex items-center justify-center text-white shadow-2xl transform hover:rotate-6 transition-all duration-500 ${idx % 2 === 0 ? 'bg-[#1F4E79] shadow-blue-900/10' : 'bg-[#34C1E5] shadow-cyan-900/10'}`}>
                       {IconComponent && <IconComponent className="w-10 h-10" strokeWidth={1.5} />}
                     </div>
-                    <h2 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter leading-none">{service.title}</h2>
+                    <h2 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter leading-[1.1] pb-2">{service.title}</h2>
                     <p className="text-xl text-slate-500 font-medium leading-relaxed">{service.description}</p>
                   </div>
                   
@@ -109,7 +109,7 @@ const Services: React.FC = () => {
               <Globe size={14} className="mr-2" />
               Digital Identity Hub
             </div>
-            <h2 className="text-4xl md:text-7xl font-black text-white tracking-tighter leading-none">Affordable Website <br /><span className="text-[#34C1E5]">Design Dubai.</span></h2>
+            <h2 className="text-4xl md:text-7xl font-black text-white tracking-tighter leading-[1.1]">Affordable Website <br /><span className="text-[#34C1E5]">Design Dubai.</span></h2>
             <p className="text-slate-400 font-medium text-xl max-w-2xl mx-auto leading-relaxed">
               Secure your professional UAE identity with Affordable Website Design Dubai and localized .ae domains today.
             </p>

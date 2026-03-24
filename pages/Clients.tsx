@@ -30,9 +30,10 @@ const Clients: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchClients = async () => {
+    const path = 'clients';
     try {
       setIsLoading(true);
-      const q = query(collection(db, 'clients'), orderBy('createdAt', 'desc'));
+      const q = query(collection(db, path), orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
       const mappedData = querySnapshot.docs.map(doc => ({
         id: doc.id,
@@ -41,6 +42,13 @@ const Clients: React.FC = () => {
       setClientsList(mappedData);
     } catch (err) {
       console.error('Failed to fetch clients:', err);
+      // Detailed error reporting for AIS Agent
+      const errInfo = {
+        error: err instanceof Error ? err.message : String(err),
+        operationType: 'get',
+        path
+      };
+      console.error('Firestore Error Info:', JSON.stringify(errInfo));
     } finally {
       setIsLoading(false);
     }
@@ -156,7 +164,7 @@ const Clients: React.FC = () => {
             <Building2 size={14} className="mr-2" />
             Our Network
           </div>
-          <h1 className="text-6xl md:text-9xl font-black text-slate-900 tracking-tighter leading-[0.9]">
+          <h1 className="text-6xl md:text-9xl font-black text-slate-900 tracking-tighter leading-[1.1] pb-4">
             Trusted <br />
             <span className="text-gradient">Partners.</span>
           </h1>

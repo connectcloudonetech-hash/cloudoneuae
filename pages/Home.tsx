@@ -1,13 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, MessageCircle, Sparkles, Globe, Smartphone, Palette, Rocket, CheckCircle2, Building2, Send, CheckCircle, AlertCircle } from 'lucide-react';
-import { SERVICES, PACKAGES, INITIAL_PROJECTS, CLIENTS } from '../constants';
+import { motion } from 'motion/react';
+import { ArrowRight, MessageCircle, Sparkles, Globe, Smartphone, Palette, Rocket, CheckCircle2, Building2, Send, CheckCircle, AlertCircle, Server, Mail, Lock, Headphones, Layout, Code, ShoppingCart, ShieldCheck } from 'lucide-react';
+import { SERVICES, PACKAGES, INITIAL_PROJECTS, CLIENTS, TESTIMONIALS, FAQS } from '../constants';
 import { Project, Client } from '../types';
+import { Quote, Plus, Minus, HelpCircle } from 'lucide-react';
+
+import HeroSlider from '../components/HeroSlider';
 
 const Home: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
   const [clientsList, setClientsList] = useState<Client[]>(CLIENTS);
+  const [openFaq, setOpenFaq] = useState<number | null>(1);
   
   // Contact Form State
   const [formData, setFormData] = useState({
@@ -20,6 +25,8 @@ const Home: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
+  const [region, setRegion] = useState<'UAE' | 'India'>('UAE');
+
   const handleContactChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -29,9 +36,12 @@ const Home: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/contact', {
+      const response = await fetch('https://formsubmit.co/ajax/connectcloudonetech@gmail.com', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify(formData)
       });
       if (response.ok) {
@@ -61,112 +71,119 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-20 py-8 md:py-12 overflow-hidden">
-      {/* Hero Section - Focused on Web Design */}
-      <section className="relative max-w-7xl mx-auto px-4 w-full animate-reveal">
-        <div className="bg-white rounded-[64px] p-12 md:p-32 shadow-2xl shadow-blue-900/5 relative overflow-hidden flex flex-col items-center text-center group">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-gradient-to-b from-blue-50 to-transparent rounded-full blur-[120px] -z-0 opacity-40"></div>
-          <div className="relative z-10 space-y-12 max-w-4xl">
-            <div className="inline-flex items-center px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] bg-blue-50/50 text-[#1F4E79] border border-blue-100/30 backdrop-blur-sm">
-              <Sparkles size={14} className="mr-2 text-[#34C1E5]" />
-              Best Web Design Company UAE
-            </div>
-            <h1 className="text-6xl md:text-9xl font-black text-slate-900 leading-[0.9] tracking-tighter">Web Design <br /><span className="text-gradient">Company in Dubai.</span></h1>
-            <p className="text-xl md:text-2xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed px-4">As a leading Web Design Company in Dubai, we specialize in Website Development Dubai and Mobile App Development UAE for ambitious global brands.</p>
-            <div className="flex flex-col sm:flex-row justify-center gap-6 pt-4">
-              <Link to="/contact" className="btn-primary px-14 py-6 text-white font-bold rounded-[32px] shadow-2xl shadow-blue-900/20 flex items-center justify-center text-lg hover:scale-[1.03] transition-transform active:scale-95">Start Your Project <ArrowRight className="ml-3 w-6 h-6" /></Link>
-              <a href="https://wa.me/971555791309" target="_blank" rel="noopener noreferrer" className="px-14 py-6 bg-white text-slate-900 border border-slate-100 font-bold rounded-[32px] shadow-sm hover:shadow-xl hover:border-white transition-all flex items-center justify-center text-lg active:scale-95"><MessageCircle className="mr-3 w-6 h-6 text-[#25D366]" />WhatsApp</a>
-            </div>
-          </div>
-          <div className="mt-28 relative w-full max-w-5xl group/hero-img">
-            <div className="relative rounded-[56px] overflow-hidden shadow-[0_50px_100px_-20px_rgba(15,23,42,0.15)] border-[12px] border-white/50 backdrop-blur-md">
-               <img 
-                src="https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?q=80&w=2669&auto=format&fit=crop" 
-                alt="Best Web Design Company UAE - Cloud One Technologies Portfolio" 
-                className="w-full h-auto scale-[1.01] group-hover/hero-img:scale-[1.03] transition-transform duration-1000"
-                onError={(e) => handleImageError(e, 'Cloud One Web Design')}
-               />
-            </div>
-          </div>
-        </div>
-      </section>
+    <div className="flex flex-col gap-20 md:gap-32 pb-12 md:pb-20 overflow-hidden">
+      {/* Hero Section - Modern Slider */}
+      <HeroSlider />
 
-      {/* Ticker Section */}
-      <section className="py-12 bg-white/50 backdrop-blur-sm border-y border-slate-100">
-        <div className="max-w-7xl mx-auto px-6 overflow-hidden relative">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-10">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 whitespace-nowrap">Industry Recognition</span>
-            <div className="flex items-center gap-12 md:gap-20 overflow-x-auto no-scrollbar scroll-smooth">
-               {clientsList.slice(0, 8).map(client => (
-                 <img 
-                  key={client.id} 
-                  src={client.logoUrl} 
-                  alt={client.name} 
-                  className="h-8 md:h-10 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500 cursor-pointer shrink-0"
-                  onError={(e) => handleImageError(e, client.name)}
-                 />
-               ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Client Ecosystem Section */}
-      <section className="max-w-7xl mx-auto px-4 w-full py-12">
+      {/* Who We Are Section */}
+      <section className="max-w-7xl mx-auto px-4 w-full">
         <div className="bg-white rounded-[64px] p-12 md:p-24 shadow-sm border border-slate-50 relative overflow-hidden">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-20 gap-10">
-            <div className="max-w-2xl space-y-6">
-              <div className="inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] bg-blue-50 text-[#1F4E79] border border-blue-100/50"><Building2 size={14} className="mr-2" /> Trusted Partners</div>
-              <h2 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter leading-[0.9]">Our Client <br /><span className="text-gradient">Ecosystem.</span></h2>
-              <p className="text-slate-500 font-medium text-xl leading-relaxed">Empowering industry leaders across the UAE with future-ready digital platforms and bespoke software.</p>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-50/50 blur-[100px] -z-10 rounded-full"></div>
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="space-y-8">
+              <div className="inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] bg-blue-50 text-[#1F4E79] border border-blue-100/50">
+                <Building2 size={14} className="mr-2" />
+                Who We Are
+              </div>
+              <h3 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tighter leading-tight">
+                Building Brands, <br />
+                <span className="text-gradient">Growing Together</span>
+              </h3>
+              <p className="text-slate-500 font-medium text-xl leading-relaxed">
+                Cloud One Technologies is a premier digital agency in Dubai, dedicated to transforming businesses through innovative web design, robust development, and strategic digital solutions.
+              </p>
+              <div className="grid grid-cols-2 gap-8 pt-4">
+                <div className="space-y-2">
+                  <h4 className="text-3xl font-black text-[#1F4E79]">100+</h4>
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Projects Delivered</p>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-3xl font-black text-[#34C1E5]">50+</h4>
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Global Clients</p>
+                </div>
+              </div>
             </div>
-            <Link to="/clients" className="group inline-flex items-center gap-4 text-slate-900 font-black text-xs uppercase tracking-[0.2em] hover:text-[#1F4E79] transition-colors bg-slate-50 px-8 py-4 rounded-2xl">Success Stories <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" /></Link>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            {clientsList.slice(0, 8).map((client) => (
-              <div key={client.id} className="bg-slate-50/50 p-8 rounded-[32px] border border-slate-100 flex items-center justify-center group hover:bg-white hover:shadow-2xl hover:shadow-blue-900/5 hover:-translate-y-2 transition-all duration-500 h-24 md:h-36">
+            <div className="relative">
+              <div className="aspect-square rounded-[48px] overflow-hidden shadow-2xl">
                 <img 
-                  src={client.logoUrl} 
-                  alt={client.name} 
-                  className="max-h-[60%] max-w-[80%] grayscale group-hover:grayscale-0 opacity-30 group-hover:opacity-100 transition-all duration-700"
-                  onError={(e) => handleImageError(e, client.name)}
+                  src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop" 
+                  alt="Cloud One Technologies Team" 
+                  className="w-full h-full object-cover"
                 />
               </div>
-            ))}
+              <div className="absolute -bottom-6 -right-6 bg-slate-900 p-8 rounded-[32px] shadow-2xl text-white hidden md:block">
+                <p className="text-sm font-bold italic">"We don't just build websites; we build digital legacies."</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Expertise Segment */}
-      <section className="max-w-7xl mx-auto px-4 w-full py-12">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8 px-6">
-          <div className="max-w-2xl space-y-6">
-            <div className="w-12 h-1 bg-[#34C1E5] rounded-full"></div>
-            <h2 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tight leading-none">Engineering <br />Stack.</h2>
-            <p className="text-slate-500 font-medium text-xl leading-relaxed">Modern technologies handled with artisan care.</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 px-4">
-          {SERVICES.slice(0, 3).map((service, idx) => (
-            <div key={service.id} className="app-card p-12 group flex flex-col justify-between h-[480px] hover:bg-slate-50/30">
-               <div className="space-y-8 relative z-10">
-                  <div className={`w-20 h-20 rounded-[30px] flex items-center justify-center mb-12 shadow-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 ${idx === 0 ? 'bg-[#1F4E79] text-white' : idx === 1 ? 'bg-[#34C1E5] text-white' : 'bg-slate-900 text-white'}`}>
-                    {idx === 0 ? <Globe size={36} /> : idx === 1 ? <Smartphone size={36} /> : <Palette size={36} />}
-                  </div>
-                  <h3 className="text-4xl font-black text-slate-900 leading-tight">{service.title}</h3>
-                  <p className="text-slate-500 font-medium text-lg leading-relaxed">{service.description}</p>
-               </div>
-               <div className="pt-10 border-t border-slate-100 flex items-center text-[#1F4E79] font-black uppercase tracking-[0.2em] text-[10px]">Explore expertise <ArrowRight className="ml-3 w-5 h-5 group-hover:translate-x-2 transition-transform" /></div>
+      {/* What We Do Section */}
+      <section className="max-w-7xl mx-auto px-4 w-full">
+        <div className="bg-slate-50/50 rounded-[64px] p-12 md:p-24">
+          <div className="text-center mb-20 space-y-6">
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] bg-blue-50 text-[#1F4E79] border border-blue-100/50">
+              <Rocket size={14} className="mr-2" />
+              What We Do
             </div>
-          ))}
+            <h3 className="text-2xl sm:text-3xl md:text-5xl font-black text-slate-900 tracking-tighter pb-4">Create Outstanding <br /> <span className="text-gradient">Web Design Solutions </span></h3>
+            <p className="text-slate-500 font-medium text-xl max-w-2xl mx-auto">From concept to execution, we provide end-to-end digital solutions tailored for the Dubai market.</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
+          {SERVICES.map((service, idx) => {
+            const IconComponent = () => {
+              switch (service.icon) {
+                case 'Layout': return <Layout size={32} />;
+                case 'Code': return <Code size={32} />;
+                case 'Smartphone': return <Smartphone size={32} />;
+                case 'Globe': return <Globe size={32} />;
+                case 'Palette': return <Palette size={32} />;
+                case 'ShoppingCart': return <ShoppingCart size={32} />;
+                default: return <Sparkles size={32} />;
+              }
+            };
+
+            return (
+              <div key={service.id} className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100 hover:shadow-xl transition-all duration-500 group">
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-8 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 ${
+                  idx % 3 === 0 ? 'bg-[#1F4E79] text-white' : 
+                  idx % 3 === 1 ? 'bg-[#34C1E5] text-white' : 
+                  'bg-slate-900 text-white'
+                }`}>
+                  <IconComponent />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 mb-4 leading-tight">{service.title}</h3>
+                <p className="text-slate-500 font-medium leading-relaxed mb-6">{service.description}</p>
+                <ul className="space-y-2">
+                  {service.details.map((detail, i) => (
+                    <li key={i} className="flex items-center text-xs font-bold text-slate-400">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mr-2"></div>
+                      {detail}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
         </div>
-      </section>
+      </div>
+    </section>
 
       {/* Portfolio Preview */}
-      <section className="max-w-7xl mx-auto px-4 w-full py-12">
+      <section className="max-w-7xl mx-auto px-4 w-full">
         <div className="text-center mb-20 space-y-6">
-          <h2 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter">Selected Works.</h2>
-          <p className="text-slate-500 font-medium text-xl">Crafting digital experiences that matter.</p>
+          <div className="inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] bg-blue-50 text-[#1F4E79] border border-blue-100/50">
+            <Sparkles size={14} className="mr-2" />
+            Portfolio
+          </div>
+              <h3 className="text-2xl sm:text-3xl md:text-5xl font-black text-slate-900 tracking-tighter leading-[1.1] pb-4">
+                Discover Our<br />
+                <span className="text-gradient">Web-Design Creations</span>
+              </h3>
+             <p className="text-slate-500 font-medium text-xl">Crafting digital experiences that matter.</p>
+
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 px-4">
           {projects.slice(0, 3).map((project) => (
@@ -194,17 +211,48 @@ const Home: React.FC = () => {
       </section>
 
       {/* Pricing Packages */}
-      <section className="max-w-7xl mx-auto px-4 w-full py-12 mb-20">
-        <div className="text-center mb-20 space-y-6">
-           <h2 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter">Affordable Website Design Dubai.</h2>
+      <section className="max-w-7xl mx-auto px-4 w-full">
+        <div className="text-center mb-12 space-y-6">
+           <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-slate-900 tracking-tighter text-gradient pb-2">We give you best Price Package</h2>
            <p className="text-slate-500 font-medium text-xl">Transparent investments for peak performance and high-quality Website Development Dubai.</p>
         </div>
+
+        {/* Region Toggle */}
+        <div className="flex flex-col items-center mb-16">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Select Your Region</span>
+          <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100 flex gap-2">
+            <button
+              onClick={() => setRegion('UAE')}
+              className={`px-8 py-3 rounded-xl text-sm font-black transition-all flex items-center gap-2 ${
+                region === 'UAE' ? 'bg-[#1F4E79] text-white shadow-lg shadow-blue-900/10' : 'text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              <Globe size={16} />
+              UAE (AED)
+            </button>
+            <button
+              onClick={() => setRegion('India')}
+              className={`px-8 py-3 rounded-xl text-sm font-black transition-all flex items-center gap-2 ${
+                region === 'India' ? 'bg-[#1F4E79] text-white shadow-lg shadow-blue-900/10' : 'text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              <Globe size={16} />
+              INDIA (INR)
+            </button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-6xl mx-auto">
            {PACKAGES.map((pkg) => (
              <div key={pkg.id} className={`p-14 rounded-[56px] flex flex-col transition-all duration-500 group ${pkg.recommended ? 'bg-slate-900 text-white shadow-2xl shadow-blue-900/40 scale-105' : 'bg-white border border-slate-100 shadow-sm hover:shadow-2xl'}`}>
                 {pkg.recommended && <div className="inline-flex mb-10 px-5 py-2 bg-[#34C1E5] text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg self-start">Premium Tier</div>}
                 <h3 className={`text-3xl font-black mb-10 ${pkg.recommended ? 'text-white' : 'text-slate-900'}`}>{pkg.name}</h3>
-                <div className="flex items-baseline gap-2 mb-12"><span className="text-2xl font-black opacity-30">AED</span><span className={`text-7xl font-black tracking-tighter ${pkg.recommended ? 'text-[#34C1E5]' : 'text-[#1F4E79]'}`}>{pkg.price}</span></div>
+                <div className="flex items-baseline gap-2 mb-12">
+                  <span className="text-2xl font-black opacity-30">{region === 'UAE' ? 'AED' : '₹'}</span>
+                  <span className={`text-7xl font-black tracking-tighter ${pkg.recommended ? 'text-[#34C1E5]' : 'text-[#1F4E79]'}`}>
+                    {region === 'UAE' ? pkg.priceUAE : pkg.priceIndia}
+                  </span>
+                </div>
                 <div className="space-y-6 flex-grow mb-14">
                    {pkg.features.map((f, i) => (
                      <div key={i} className={`flex items-center gap-4 font-semibold text-base ${pkg.recommended ? 'text-slate-300' : 'text-slate-500'}`}>
@@ -216,10 +264,63 @@ const Home: React.FC = () => {
              </div>
            ))}
         </div>
+
+        {/* Included in Every Plan */}
+        <div className="mt-24 bg-slate-50/50 rounded-[48px] p-12 md:p-20 border border-slate-100">
+          <div className="text-center mb-16 space-y-2">
+            <h2 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">Included in Every Plan</h2>
+            <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">Standard quality benchmarks</p>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-8 md:gap-12">
+            <div className="space-y-4 text-center group">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl text-[#1F4E79] shadow-sm group-hover:bg-[#1F4E79] group-hover:text-white transition-all duration-500 border border-slate-100">
+                <Globe size={28} />
+              </div>
+              <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Free Domain</h4>
+            </div>
+            <div className="space-y-4 text-center group">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl text-[#34C1E5] shadow-sm group-hover:bg-[#34C1E5] group-hover:text-white transition-all duration-500 border border-slate-100">
+                <Server size={28} />
+              </div>
+              <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Free Hosting</h4>
+            </div>
+            <div className="space-y-4 text-center group">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl text-purple-600 shadow-sm group-hover:bg-purple-600 group-hover:text-white transition-all duration-500 border border-slate-100">
+                <Mail size={28} />
+              </div>
+              <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Free Email</h4>
+            </div>
+            <div className="space-y-4 text-center group">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl text-green-600 shadow-sm group-hover:bg-green-600 group-hover:text-white transition-all duration-500 border border-slate-100">
+                <MessageCircle size={28} />
+              </div>
+              <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">WhatsApp Integration</h4>
+            </div>
+            <div className="space-y-4 text-center group">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl text-orange-600 shadow-sm group-hover:bg-orange-600 group-hover:text-white transition-all duration-500 border border-slate-100">
+                <Smartphone size={28} />
+              </div>
+              <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Mobile Responsive</h4>
+            </div>
+            <div className="space-y-4 text-center group">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl text-indigo-600 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500 border border-slate-100">
+                <Lock size={28} />
+              </div>
+              <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Free SSL</h4>
+            </div>
+            <div className="space-y-4 text-center group">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl text-rose-600 shadow-sm group-hover:bg-rose-600 group-hover:text-white transition-all duration-500 border border-slate-100">
+                <Headphones size={28} />
+              </div>
+              <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Support</h4>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Contact Section */}
-      <section className="max-w-7xl mx-auto px-4 w-full py-12 mb-20">
+      <section className="max-w-7xl mx-auto px-4 w-full">
         <div className="bg-slate-900 rounded-[64px] p-12 md:p-24 shadow-2xl shadow-blue-900/20 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] -z-0"></div>
           <div className="grid lg:grid-cols-2 gap-20 relative z-10">
@@ -228,7 +329,7 @@ const Home: React.FC = () => {
                 <MessageCircle size={14} className="mr-2" />
                 Get in Touch
               </div>
-              <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-[0.9]">Mobile App <br /><span className="text-[#34C1E5]">Development UAE.</span></h2>
+              <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-tight">Mobile App <br /><span className="text-[#34C1E5]">Development UAE.</span></h2>
               <p className="text-slate-400 font-medium text-xl leading-relaxed max-w-md">
                 Contact the Best Web Design Company UAE for your next digital venture. We specialize in Website Development Dubai and custom software solutions.
               </p>
@@ -335,14 +436,14 @@ const Home: React.FC = () => {
       </section>
 
       {/* Technologies We Use Section */}
-      <section className="max-w-7xl mx-auto px-4 w-full py-12 mb-32">
+      <section className="max-w-7xl mx-auto px-4 w-full">
         <div className="bg-white rounded-[64px] p-12 md:p-24 shadow-sm border border-slate-50 relative overflow-hidden text-center">
           <div className="space-y-6 mb-16">
             <div className="inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] bg-blue-50 text-[#1F4E79] border border-blue-100/50">
               <Rocket size={14} className="mr-2" />
               Our Tech Stack
             </div>
-            <h2 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter leading-[0.9]">Technologies <br /><span className="text-gradient">We Use.</span></h2>
+            <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tighter leading-tight">Technologies <br /><span className="text-gradient">We Use.</span></h2>
             <p className="text-slate-500 font-medium text-xl max-w-2xl mx-auto">We leverage the most advanced technologies to build scalable, high-performance digital solutions.</p>
           </div>
           
@@ -366,6 +467,126 @@ const Home: React.FC = () => {
                   />
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-900 transition-colors">{tech.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Our Clients Section */}
+      <section className="max-w-7xl mx-auto px-4 w-full">
+        <div className="bg-slate-50/50 rounded-[64px] p-12 md:p-24 shadow-sm border border-slate-50 relative overflow-hidden text-center">
+          <div className="space-y-6 mb-16">
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] bg-blue-50 text-[#1F4E79] border border-blue-100/50">
+              <Building2 size={14} className="mr-2" />
+              Our Partners
+            </div>
+            <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tighter leading-tight">Trusted by <br /><span className="text-gradient">Global Brands.</span></h2>
+            <p className="text-slate-500 font-medium text-xl max-w-2xl mx-auto">We've partnered with industry leaders across the UAE and beyond to deliver exceptional digital experiences.</p>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8 items-center justify-center">
+            {clientsList.map((client) => (
+              <div key={client.id} className="flex flex-col items-center gap-4 group">
+                <div className="w-full aspect-video bg-white rounded-3xl flex items-center justify-center p-8 group-hover:shadow-xl transition-all duration-500 border border-slate-100 group-hover:border-white">
+                  <img 
+                    src={client.logoUrl} 
+                    alt={client.name} 
+                    className="w-full h-full object-contain grayscale group-hover:grayscale-0 transition-all duration-500"
+                    onError={(e) => handleImageError(e, client.name)}
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+                <div className="text-center">
+                  <h4 className="text-sm font-black text-slate-900">{client.name}</h4>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{client.industry}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="max-w-7xl mx-auto px-4 w-full">
+        <div className="bg-white rounded-[64px] p-12 md:p-24 shadow-sm border border-slate-50 relative overflow-hidden text-center">
+          <div className="space-y-6 mb-16">
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] bg-blue-50 text-[#1F4E79] border border-blue-100/50">
+              <Quote size={14} className="mr-2" />
+              Testimonials
+            </div>
+            <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tighter leading-tight">What Our <br /><span className="text-gradient">Clients Say.</span></h2>
+            <p className="text-slate-500 font-medium text-xl max-w-2xl mx-auto">Don't just take our word for it. Here's what some of our valued partners have to say about working with Cloud One Technologies.</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {TESTIMONIALS.map((testimonial) => (
+              <div key={testimonial.id} className="bg-slate-50/50 p-10 rounded-[40px] border border-slate-100 text-left flex flex-col justify-between group hover:bg-white hover:shadow-xl transition-all duration-500">
+                <div className="space-y-6">
+                  <div className="w-12 h-12 bg-[#1F4E79] rounded-2xl flex items-center justify-center text-white">
+                    <Quote size={24} />
+                  </div>
+                  <p className="text-slate-600 font-medium leading-relaxed italic">"{testimonial.content}"</p>
+                </div>
+                <div className="mt-10 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
+                    <img 
+                      src={testimonial.avatar} 
+                      alt={testimonial.name} 
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-slate-900">{testimonial.name}</h4>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{testimonial.role}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="max-w-7xl mx-auto px-4 w-full">
+        <div className="bg-slate-50/50 rounded-[64px] p-12 md:p-24 shadow-sm border border-slate-50 relative overflow-hidden">
+          <div className="text-center mb-20 space-y-6">
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] bg-blue-50 text-[#1F4E79] border border-blue-100/50">
+              <HelpCircle size={14} className="mr-2" />
+              FAQ
+            </div>
+            <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tighter leading-tight">Frequently Asked <br /><span className="text-gradient">Questions.</span></h2>
+            <p className="text-slate-500 font-medium text-xl max-w-2xl mx-auto">Find answers to common questions about our web design and development services in Dubai.</p>
+          </div>
+          
+          <div className="max-w-4xl mx-auto space-y-4">
+            {FAQS.map((faq) => (
+              <div 
+                key={faq.id} 
+                className={`bg-white rounded-[32px] border transition-all duration-500 overflow-hidden ${
+                  openFaq === faq.id ? 'border-[#1F4E79] shadow-xl shadow-blue-900/5' : 'border-slate-100 hover:border-slate-200'
+                }`}
+              >
+                <button 
+                  onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
+                  className="w-full p-8 flex items-center justify-between text-left"
+                >
+                  <span className={`text-lg font-black tracking-tight transition-colors ${openFaq === faq.id ? 'text-[#1F4E79]' : 'text-slate-900'}`}>{faq.question}</span>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${openFaq === faq.id ? 'bg-[#1F4E79] text-white rotate-180' : 'bg-slate-50 text-slate-400'}`}>
+                    {openFaq === faq.id ? <Minus size={20} /> : <Plus size={20} />}
+                  </div>
+                </button>
+                <motion.div 
+                  initial={false}
+                  animate={{ height: openFaq === faq.id ? 'auto' : 0, opacity: openFaq === faq.id ? 1 : 0 }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  className="px-8"
+                >
+                  <div className="pb-8 text-slate-500 font-medium leading-relaxed">
+                    {faq.answer}
+                  </div>
+                </motion.div>
               </div>
             ))}
           </div>

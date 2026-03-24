@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, MessageCircle, ChevronDown } from 'lucide-react';
+import { Menu, X, MessageCircle, ChevronDown, Globe } from 'lucide-react';
 import Logo from './Logo';
 import { SERVICES } from '../constants';
 
@@ -9,8 +9,10 @@ const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
+  const [packagesOpen, setPackagesOpen] = useState(false);
   const location = useLocation();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const packagesDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -24,6 +26,9 @@ const Header: React.FC = () => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setServicesOpen(false);
       }
+      if (packagesDropdownRef.current && !packagesDropdownRef.current.contains(event.target as Node)) {
+        setPackagesOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -33,13 +38,14 @@ const Header: React.FC = () => {
   useEffect(() => {
     setIsOpen(false);
     setServicesOpen(false);
+    setPackagesOpen(false);
   }, [location.pathname]);
 
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
-    { name: 'Services', path: '/services', hasDropdown: true },
-    { name: 'Packages', path: '/packages' },
+    { name: 'Services', path: '/services', hasDropdown: true, dropdownType: 'services' },
+    { name: 'Packages', path: '/packages', hasDropdown: true, dropdownType: 'packages' },
     { name: 'Portfolio', path: '/portfolio' },
     { name: 'Clients', path: '/clients' },
     { name: 'Contact', path: '/contact' },
@@ -58,7 +64,7 @@ const Header: React.FC = () => {
       }`}>
         <div className={`glass border border-white/50 rounded-[32px] md:rounded-[40px] px-6 md:px-10 h-20 md:h-24 flex justify-between items-center shadow-xl shadow-blue-900/5`}>
           <Link to="/" className="flex items-center transform active:scale-95 transition-transform shrink-0">
-            <Logo className="h-9 md:h-12 w-auto" />
+            <Logo className="h-[65px] pr-[30px] w-auto" />
           </Link>
 
           {/* Desktop Nav */}
@@ -67,43 +73,78 @@ const Header: React.FC = () => {
               <div 
                 key={link.path} 
                 className="relative group"
-                onMouseEnter={() => link.hasDropdown && setServicesOpen(true)}
-                onMouseLeave={() => link.hasDropdown && setServicesOpen(false)}
-                ref={link.hasDropdown ? dropdownRef : null}
+                onMouseEnter={() => {
+                  if (link.dropdownType === 'services') setServicesOpen(true);
+                  if (link.dropdownType === 'packages') setPackagesOpen(true);
+                }}
+                onMouseLeave={() => {
+                  if (link.dropdownType === 'services') setServicesOpen(false);
+                  if (link.dropdownType === 'packages') setPackagesOpen(false);
+                }}
+                ref={link.dropdownType === 'services' ? dropdownRef : link.dropdownType === 'packages' ? packagesDropdownRef : null}
               >
                 <Link
                   to={link.path}
                   className={`px-5 py-3 text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all flex items-center gap-2 ${
-                    isActive(link.path) 
+                    isActive(link.path) || (link.dropdownType === 'packages' && (isActive('/packages/uae') || isActive('/packages/india')))
                       ? 'bg-[#1F4E79] text-white shadow-lg shadow-blue-200/50' 
                       : 'text-gray-500 hover:bg-white hover:text-gray-900'
                   }`}
                 >
                   {link.name}
                   {link.hasDropdown && (
-                    <ChevronDown size={14} className={`transition-transform duration-300 ${servicesOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={14} className={`transition-transform duration-300 ${(link.dropdownType === 'services' ? servicesOpen : packagesOpen) ? 'rotate-180' : ''}`} />
                   )}
                 </Link>
 
                 {/* Desktop Dropdown */}
                 {link.hasDropdown && (
-                  <div className={`absolute top-full left-0 pt-4 transition-all duration-300 ${servicesOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
+                  <div className={`absolute top-full left-0 pt-4 transition-all duration-300 ${(link.dropdownType === 'services' ? servicesOpen : packagesOpen) ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
                     <div className="bg-white/95 backdrop-blur-3xl border border-slate-100 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-4 min-w-[280px]">
-                      {SERVICES.map((service) => (
-                        <Link
-                          key={service.id}
-                          to="/services"
-                          className="flex items-center p-4 rounded-2xl hover:bg-slate-50 transition-colors group/item"
-                        >
-                          <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-[#1F4E79] group-hover/item:bg-[#1F4E79] group-hover/item:text-white transition-all mr-4">
-                            <span className="text-[10px] font-black">{service.title.substring(0, 1)}</span>
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-slate-900">{service.title}</p>
-                            <p className="text-[10px] text-slate-400 font-medium line-clamp-1">{service.description}</p>
-                          </div>
-                        </Link>
-                      ))}
+                      {link.dropdownType === 'services' ? (
+                        SERVICES.map((service) => (
+                          <Link
+                            key={service.id}
+                            to="/services"
+                            className="flex items-center p-4 rounded-2xl hover:bg-slate-50 transition-colors group/item"
+                          >
+                            <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-[#1F4E79] group-hover/item:bg-[#1F4E79] group-hover/item:text-white transition-all mr-4">
+                              <span className="text-[10px] font-black">{service.title.substring(0, 1)}</span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-black text-slate-900">{service.title}</p>
+                              <p className="text-[10px] text-slate-400 font-medium line-clamp-1">{service.description}</p>
+                            </div>
+                          </Link>
+                        ))
+                      ) : (
+                        <div className="space-y-2">
+                          <Link
+                            to="/packages/uae"
+                            className="flex items-center p-4 rounded-2xl hover:bg-slate-50 transition-colors group/item"
+                          >
+                            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 group-hover/item:bg-blue-600 group-hover/item:text-white transition-all mr-4">
+                              <Globe size={18} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-black text-slate-900">UAE Packages</p>
+                              <p className="text-[10px] text-slate-400 font-medium">Pricing in AED</p>
+                            </div>
+                          </Link>
+                          <Link
+                            to="/packages/india"
+                            className="flex items-center p-4 rounded-2xl hover:bg-slate-50 transition-colors group/item"
+                          >
+                            <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600 group-hover/item:bg-orange-600 group-hover/item:text-white transition-all mr-4">
+                              <Globe size={18} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-black text-slate-900">India Packages</p>
+                              <p className="text-[10px] text-slate-400 font-medium">Pricing in INR</p>
+                            </div>
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -152,15 +193,18 @@ const Header: React.FC = () => {
                   </Link>
                   {link.hasDropdown && (
                     <button 
-                      onClick={() => setServicesOpen(!servicesOpen)}
+                      onClick={() => {
+                        if (link.dropdownType === 'services') setServicesOpen(!servicesOpen);
+                        if (link.dropdownType === 'packages') setPackagesOpen(!packagesOpen);
+                      }}
                       className="p-4 text-slate-400 hover:text-slate-900 transition-colors"
                     >
-                      <ChevronDown size={24} className={`transition-transform duration-300 ${servicesOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown size={24} className={`transition-transform duration-300 ${(link.dropdownType === 'services' ? servicesOpen : packagesOpen) ? 'rotate-180' : ''}`} />
                     </button>
                   )}
                 </div>
                 
-                {link.hasDropdown && servicesOpen && (
+                {link.hasDropdown && link.dropdownType === 'services' && servicesOpen && (
                   <div className="mt-2 ml-4 space-y-1 border-l-2 border-slate-100 pl-4 animate-reveal">
                     {SERVICES.map((service) => (
                       <Link
@@ -172,6 +216,25 @@ const Header: React.FC = () => {
                         {service.title}
                       </Link>
                     ))}
+                  </div>
+                )}
+
+                {link.hasDropdown && link.dropdownType === 'packages' && packagesOpen && (
+                  <div className="mt-2 ml-4 space-y-1 border-l-2 border-slate-100 pl-4 animate-reveal">
+                    <Link
+                      to="/packages/uae"
+                      onClick={() => setIsOpen(false)}
+                      className="block px-6 py-4 text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors"
+                    >
+                      UAE Packages
+                    </Link>
+                    <Link
+                      to="/packages/india"
+                      onClick={() => setIsOpen(false)}
+                      className="block px-6 py-4 text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors"
+                    >
+                      India Packages
+                    </Link>
                   </div>
                 )}
               </div>

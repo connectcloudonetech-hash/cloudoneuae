@@ -1,8 +1,6 @@
 
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, MessageCircle, Send, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
-import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -28,22 +26,30 @@ const Contact: React.FC = () => {
     setErrorMessage('');
 
     try {
-      // Save to Firestore
-      await addDoc(collection(db, 'contacts'), {
-        ...formData,
-        createdAt: serverTimestamp()
+      const response = await fetch('https://formsubmit.co/ajax/connectcloudonetech@gmail.com', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(formData)
       });
 
-      setSubmitStatus('success');
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        service: 'Web Designing',
-        message: ''
-      });
+      if (response.ok) {
+        setSubmitStatus('success');
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          service: 'Web Designing',
+          message: ''
+        });
+      } else {
+        setSubmitStatus('error');
+        setErrorMessage('Failed to send message. Please try again later.');
+      }
     } catch (error) {
-      console.error('Firestore submission error:', error);
+      console.error('Submission error:', error);
       setSubmitStatus('error');
       setErrorMessage('Failed to send message. Please check your connection and try again.');
     } finally {

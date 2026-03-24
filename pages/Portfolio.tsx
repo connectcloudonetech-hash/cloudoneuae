@@ -32,10 +32,11 @@ const Portfolio: React.FC = () => {
 
   // Fetch projects from Firestore
   const fetchProjects = async () => {
+    const path = 'portfolio';
     try {
       setIsLoading(true);
       setFetchError(null);
-      const q = query(collection(db, 'portfolio'), orderBy('createdAt', 'desc'));
+      const q = query(collection(db, path), orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
       const mappedData = querySnapshot.docs.map(doc => {
         const data = doc.data();
@@ -52,6 +53,19 @@ const Portfolio: React.FC = () => {
     } catch (err) {
       console.error('Failed to fetch projects:', err);
       setFetchError('Failed to load portfolio items from the cloud.');
+      
+      // Detailed error reporting for AIS Agent
+      const errInfo = {
+        error: err instanceof Error ? err.message : String(err),
+        authInfo: {
+          userId: user?.uid,
+          email: user?.email,
+          emailVerified: user?.emailVerified,
+        },
+        operationType: 'get',
+        path
+      };
+      console.error('Firestore Error Info:', JSON.stringify(errInfo));
     } finally {
       setIsLoading(false);
     }
@@ -211,7 +225,7 @@ const Portfolio: React.FC = () => {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-10 md:mb-16 gap-6 md:gap-8 animate-reveal">
           <div className="text-center md:text-left space-y-2">
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-slate-900 tracking-tighter">Best Web Design <span className="text-gradient">Company UAE.</span></h1>
+            <h1 className="text-3xl sm:text-5xl md:text-7xl font-black text-slate-900 tracking-tighter leading-[1.1] pb-4">Best Web Design <span className="text-gradient">Company UAE.</span></h1>
             <p className="text-slate-500 font-medium text-base md:text-lg">Showcasing our expert Website Development Dubai and Mobile App Development UAE projects.</p>
           </div>
 
@@ -434,7 +448,7 @@ const Portfolio: React.FC = () => {
                   </div>
                 </div>
                 <div className="p-10 flex flex-col flex-grow">
-                  <h3 className="text-2xl font-black text-slate-900 mb-3 group-hover:text-[#1F4E79] transition-colors tracking-tight">{project.title}</h3>
+                  <h3 className="text-2xl font-black text-slate-900 mb-3 group-hover:text-[#1F4E79] transition-colors tracking-tight leading-tight">{project.title}</h3>
                   <p className="text-slate-500 text-sm font-medium line-clamp-2 mb-8">{project.description}</p>
                   <div className="pt-8 mt-auto border-t border-slate-50">
                     <span className="inline-flex items-center text-[#1F4E79] font-black text-[10px] uppercase tracking-widest group-hover:translate-x-2 transition-transform">
@@ -494,7 +508,7 @@ const Portfolio: React.FC = () => {
                       <Sparkles size={14} className="mr-2 text-[#34C1E5]" />
                       Case Study
                     </div>
-                    <h2 className="text-4xl md:text-7xl font-black text-slate-900 tracking-tighter leading-[0.9] mb-4">
+                    <h2 className="text-4xl md:text-7xl font-black text-slate-900 tracking-tighter leading-[1.1] mb-4">
                       {selectedProject.title}
                     </h2>
                     <div className="w-24 h-2 bg-[#34C1E5] rounded-full"></div>

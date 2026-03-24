@@ -1,22 +1,53 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { PACKAGES } from '../constants';
-import { CheckCircle2, ShieldCheck, Zap, Headphones, Sparkles } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, Zap, Headphones, Sparkles, Globe2, Server, Mail, MessageCircle, Smartphone, Globe, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const Packages: React.FC = () => {
+interface PackagesProps {
+  initialRegion?: 'UAE' | 'India';
+}
+
+const Packages: React.FC<PackagesProps> = ({ initialRegion = 'UAE' }) => {
+  const [region, setRegion] = useState<'UAE' | 'India'>(initialRegion);
+
   return (
     <div className="bg-[#F8FAFC] min-h-screen py-16 px-6">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
+        <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
            <div className="inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-purple-100 text-purple-700">
             <Sparkles size={14} className="mr-2" />
             Pricing Plans
           </div>
-          <h1 className="text-4xl md:text-6xl font-black text-gray-900 tracking-tight leading-tight">Simple Pricing</h1>
+          <h1 className="text-4xl md:text-6xl font-black text-gray-900 tracking-tight leading-tight">We give you best Package</h1>
           <p className="text-gray-500 font-medium leading-relaxed">
-            Choose the best fit for your goals. All plans include premium UI design and mobile optimization.
+            Choose the best fit for your goals. We offer specialized pricing for <span className="text-blue-600 font-bold">UAE</span> and <span className="text-blue-600 font-bold">India</span> regions.
           </p>
+        </div>
+
+        {/* Region Toggle */}
+        <div className="flex flex-col items-center mb-16">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4">Select Your Region</span>
+          <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 flex gap-2">
+            <button
+              onClick={() => setRegion('UAE')}
+              className={`px-8 py-3 rounded-xl text-sm font-black transition-all flex items-center gap-2 ${
+                region === 'UAE' ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              <Globe2 size={16} />
+              UAE (AED)
+            </button>
+            <button
+              onClick={() => setRegion('India')}
+              className={`px-8 py-3 rounded-xl text-sm font-black transition-all flex items-center gap-2 ${
+                region === 'India' ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              <Globe2 size={16} />
+              INDIA (INR)
+            </button>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 mb-24">
@@ -36,8 +67,10 @@ const Packages: React.FC = () => {
               <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-8">One-time payment</p>
               
               <div className="mb-10 flex items-baseline gap-2">
-                <span className="text-lg font-black text-gray-300">AED</span>
-                <span className="text-6xl font-black text-gray-900 tracking-tighter">{pkg.price}</span>
+                <span className="text-lg font-black text-gray-300">{region === 'UAE' ? 'AED' : '₹'}</span>
+                <span className="text-6xl font-black text-gray-900 tracking-tighter">
+                  {region === 'UAE' ? pkg.priceUAE : pkg.priceIndia}
+                </span>
               </div>
 
               <div className="flex-grow space-y-4 mb-10">
@@ -67,27 +100,48 @@ const Packages: React.FC = () => {
             <p className="text-gray-400 text-xs font-black uppercase tracking-widest">Standard quality benchmarks</p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-16">
-            <div className="space-y-6 text-center">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-50 rounded-[32px] text-blue-600">
-                <ShieldCheck size={36} />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-8 md:gap-12">
+            <div className="space-y-4 text-center group">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-50 rounded-2xl text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
+                <Globe size={28} />
               </div>
-              <h4 className="text-xl font-black text-gray-900">Secure Hosting</h4>
-              <p className="text-gray-500 font-medium text-sm leading-relaxed">Free SSL certificates and enterprise-grade security protocols.</p>
+              <h4 className="text-sm font-black text-gray-900 uppercase tracking-wider">Free Domain</h4>
             </div>
-            <div className="space-y-6 text-center">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-teal-50 rounded-[32px] text-teal-600">
-                <Zap size={36} />
+            <div className="space-y-4 text-center group">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-teal-50 rounded-2xl text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition-all duration-500">
+                <Server size={28} />
               </div>
-              <h4 className="text-xl font-black text-gray-900">Fast Performance</h4>
-              <p className="text-gray-500 font-medium text-sm leading-relaxed">Highly optimized pages for seamless user experience and SEO.</p>
+              <h4 className="text-sm font-black text-gray-900 uppercase tracking-wider">Free Hosting</h4>
             </div>
-            <div className="space-y-6 text-center">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-purple-50 rounded-[32px] text-purple-600">
-                <Headphones size={36} />
+            <div className="space-y-4 text-center group">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-50 rounded-2xl text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all duration-500">
+                <Mail size={28} />
               </div>
-              <h4 className="text-xl font-black text-gray-900">Priority Support</h4>
-              <p className="text-gray-500 font-medium text-sm leading-relaxed">Direct access to our tech team for maintenance and updates.</p>
+              <h4 className="text-sm font-black text-gray-900 uppercase tracking-wider">Free Email</h4>
+            </div>
+            <div className="space-y-4 text-center group">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-50 rounded-2xl text-green-600 group-hover:bg-green-600 group-hover:text-white transition-all duration-500">
+                <MessageCircle size={28} />
+              </div>
+              <h4 className="text-sm font-black text-gray-900 uppercase tracking-wider">WhatsApp Integration</h4>
+            </div>
+            <div className="space-y-4 text-center group">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-50 rounded-2xl text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-all duration-500">
+                <Smartphone size={28} />
+              </div>
+              <h4 className="text-sm font-black text-gray-900 uppercase tracking-wider">Mobile Responsive</h4>
+            </div>
+            <div className="space-y-4 text-center group">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-50 rounded-2xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500">
+                <Lock size={28} />
+              </div>
+              <h4 className="text-sm font-black text-gray-900 uppercase tracking-wider">Free SSL</h4>
+            </div>
+            <div className="space-y-4 text-center group">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-rose-50 rounded-2xl text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition-all duration-500">
+                <Headphones size={28} />
+              </div>
+              <h4 className="text-sm font-black text-gray-900 uppercase tracking-wider">Support</h4>
             </div>
           </div>
         </div>
